@@ -10,21 +10,27 @@ export interface SearchEngine {
 }
 
 /**
- * Case-insensitive substring scan, line by line, tracking the nearest
- * Markdown heading above each match.
+ * Case-insensitive scan, line by line, tracking the nearest Markdown heading.
+ * A line matches if it contains ANY query word; score = how many distinct query
+ * words it contains, so multi-word natural-language queries rank by relevance
+ * instead of demanding the whole phrase appear verbatim (which almost never does).
  */
-// ponytail: linear scan, fine for a few hundred markdown files; replace with an indexed engine if it ever feels slow.
+// ponytail: linear scan + word-count score, no IDF — a rare word counts the same as
+// a common one. Fine for a few hundred markdown files; add weighting/indexing if it bites.
 export class LineSearchEngine implements SearchEngine {
   search(file: string, content: string, query: string): SearchResult[] {
-    const needle = query.toLowerCase();
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [];
     const results: SearchResult[] = [];
     let heading = "";
     const lines = content.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (/^#{1,6}\s/.test(line)) heading = line.replace(/^#{1,6}\s+/, "").trim();
-      if (line.toLowerCase().includes(needle)) {
-        results.push({ file, heading, snippet: line.trim(), line: i + 1 });
+      const lc = line.toLowerCase();
+      const score = words.filter((w) => lc.includes(w)).length;
+      if (score > 0) {
+        results.push({ file, heading, snippet: line.trim(), line: i + 1, score });
       }
     }
     return results;

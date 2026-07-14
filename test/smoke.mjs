@@ -11,7 +11,8 @@ const root = await fs.mkdtemp(path.join(os.tmpdir(), "memory-mcp-"));
 await fs.mkdir(path.join(root, "Knowledge/Kuku/payments"), { recursive: true });
 await fs.writeFile(
   path.join(root, "Knowledge/Kuku/payments/iap.md"),
-  "# IAP\n\n## StoreManager\n\nStoreManager handles all purchases.\n",
+  "# IAP\n\n## StoreManager\n\nStoreManager handles all purchases.\n\n" +
+    "## Coins\n\nCoins unlock premium reels and downloads.\nPremium subscription is separate.\n",
 );
 
 const client = new Client({ name: "smoke", version: "1.0.0" });
@@ -49,6 +50,13 @@ const search = JSON.parse(await call("search_memory", { repositoryPath, query: "
 assert.equal(search.results.length, 1);
 assert.equal(search.results[0].heading, "StoreManager");
 assert.equal(search.results[0].file, "payments/iap.md");
+
+// multi-word queries rank by how many query words a line matches (relevance)
+const ranked = JSON.parse(await call("search_memory", { repositoryPath, query: "coins premium reels" }));
+assert.equal(ranked.results[0].score, 3, "line matching all three words should rank first");
+assert.equal(ranked.results[0].heading, "Coins");
+const scores = ranked.results.map((r) => r.score);
+assert.deepEqual(scores, [...scores].sort((a, b) => b - a), "results must be sorted by score desc");
 
 // remember + pending_updates
 await call("remember", {

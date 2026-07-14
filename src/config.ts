@@ -13,6 +13,8 @@ export interface Config {
   stashRoot: string;
   /** JSONL history of tool calls, e.g. Memory/MCP/logs/tool-calls.jsonl. */
   logFile: string;
+  /** Rotate the log once it reaches this many bytes. Override with LOG_MAX_BYTES. */
+  logMaxBytes: number;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -24,5 +26,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const stashRoot = env.STASH_ROOT ?? path.join(knowledgeRoot, "Stash");
   const logFile =
     env.LOG_FILE ?? path.join(memoryRoot, "MCP", "logs", "tool-calls.jsonl");
-  return { knowledgeRoot, stashRoot, logFile };
+  const logMaxBytes = Number(env.LOG_MAX_BYTES) || 5_000_000;
+  return { knowledgeRoot, stashRoot, logFile, logMaxBytes };
 }

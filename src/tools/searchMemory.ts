@@ -16,11 +16,15 @@ export const registerSearchMemory: RegisterTool = (server, { resolver, registry,
       },
     },
     async ({ repositoryPath, query }) => {
-      await logger.log("search_memory", { repositoryPath, query });
       const project = resolver.resolve(repositoryPath);
       const results = (
         await Promise.all(registry.all().map((p) => p.search(project, query)))
-      ).flat();
+      )
+        .flat()
+        .sort((a, b) => b.score - a.score); // most query-words matched first
+      // Log after searching so total is recorded — total:0 is the high-signal case (an
+      // agent expected a memory that was never written). Query `gain` surfaces these.
+      await logger.log("search_memory", { repositoryPath, query, total: results.length });
       return json({
         project,
         query,

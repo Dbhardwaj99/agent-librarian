@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
+    "gain": "npm run build && node dist/gain.js",
     "test": "npm run build && node test/smoke.mjs"
   },
   "dependencies": {

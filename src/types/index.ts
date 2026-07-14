@@ -8,6 +8,8 @@ export interface SearchResult {
   snippet: string;
   /** 1-based line number of the match. */
   line: number;
+  /** How many distinct query words matched this line — used to rank relevance. */
+  score: number;
 }
 
 /** An immutable proposed-update event written to the Stash. */

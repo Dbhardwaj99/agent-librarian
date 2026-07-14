@@ -24,7 +24,7 @@ const deps: ToolDeps = {
     new MarkdownKnowledgeProvider(config.knowledgeRoot, new LineSearchEngine()),
   ),
   events: new EventStore(config.stashRoot),
-  logger: new CallLogger(config.logFile),
+  logger: new CallLogger(config.logFile, config.logMaxBytes),
 };
 
 const server = new McpServer({ name: "local-memory", version: "1.0.0" });
