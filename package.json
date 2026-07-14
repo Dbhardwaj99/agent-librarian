@@ -1,0 +1,23 @@
+{
+  "name": "local-memory",
+  "version": "1.0.0",
+  "description": "Local MCP server exposing persistent project knowledge from the Memory directory",
+  "type": "module",
+  "bin": {
+    "local-memory": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "npm run build && node test/smoke.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "yaml": "^2.7.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}
