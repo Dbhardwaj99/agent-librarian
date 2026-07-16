@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { json, type RegisterTool } from "./deps.js";
+import { json, logged, type RegisterTool } from "./deps.js";
 
 export const registerPendingUpdates: RegisterTool = (server, { resolver, events, logger }) => {
   server.registerTool(
@@ -12,11 +12,11 @@ export const registerPendingUpdates: RegisterTool = (server, { resolver, events,
         repositoryPath: z.string().describe("Absolute path of the repository being worked on (use the current working directory)"),
       },
     },
-    async ({ repositoryPath }) => {
-      await logger.log("pending_updates", { repositoryPath });
-      const project = resolver.resolve(repositoryPath);
-      const pending = await events.list(project);
-      return json({ project, count: pending.length, pending });
-    },
+    async ({ repositoryPath }) =>
+      logged(logger, "pending_updates", { repositoryPath }, async () => {
+        const project = resolver.resolve(repositoryPath);
+        const pending = await events.list(project);
+        return { result: json({ project, count: pending.length, pending }) };
+      }),
   );
 };

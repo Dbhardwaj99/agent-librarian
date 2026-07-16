@@ -58,6 +58,15 @@ assert.equal(ranked.results[0].heading, "Coins");
 const scores = ranked.results.map((r) => r.score);
 assert.deepEqual(scores, [...scores].sort((a, b) => b - a), "results must be sorted by score desc");
 
+// stopwords don't inflate scores: a filler-word-heavy query still ranks the
+// line sharing the most SIGNIFICANT words first, not whichever line happens
+// to also contain "the"/"a"/"and".
+const stopwordy = JSON.parse(
+  await call("search_memory", { repositoryPath, query: "the coins and the premium reels" }),
+);
+assert.equal(stopwordy.results[0].heading, "Coins");
+assert.equal(stopwordy.results[0].score, 3, "stopwords must not count toward the score");
+
 // remember + pending_updates
 await call("remember", {
   repositoryPath,
@@ -73,20 +82,56 @@ assert.equal(pending.count, 1);
 assert.equal(pending.pending[0].event.summary, "StoreManager was made thread-safe.");
 assert.match(pending.pending[0].file, /\.yaml$/);
 
-// unknown repo fails cleanly
+// a knowledge_correction nudges toward other notes that repeat the corrected fact,
+// instead of silently leaving them stale
+const correction = JSON.parse(
+  await call("remember", {
+    repositoryPath,
+    agent: "smoke-test",
+    type: "knowledge_correction",
+    summary: "Coins do not unlock downloads, only reels.",
+    tags: ["coins", "premium"],
+  }),
+);
+assert.ok(
+  correction.possiblyAffected.some((r) => r.file === "payments/iap.md"),
+  "correction should surface the note that still repeats the old claim",
+);
+
+// unknown repo fails cleanly for read tools — nothing to list/read for a project
+// that was never registered
 const unknown = await client.callTool({
   name: "list_notes",
   arguments: { repositoryPath: "/tmp/not-a-repo" },
 });
 assert.equal(unknown.isError, true);
 
-// call log recorded every successful call with params and timestamp
+// ...but remember() never drops the knowledge: an unresolvable repo falls back to
+// an "Unfiled" bucket instead of throwing the event away
+const strayResult = JSON.parse(
+  await call("remember", {
+    repositoryPath: "/tmp/not-a-repo",
+    agent: "smoke-test",
+    type: "fact",
+    summary: "Learned something about a repo the resolver doesn't know.",
+  }),
+);
+assert.equal(strayResult.unfiled, true);
+const strayFile = await fs.readFile(path.join(root, "Knowledge/Stash/Unfiled", strayResult.file), "utf8");
+assert.match(strayFile, /repositoryPath: \/tmp\/not-a-repo/);
+
+// call log recorded every successful call with params and timestamp, and records
+// the outcome (ok: true/false) rather than just the attempted call
 const log = (await fs.readFile(path.join(root, "MCP/logs/tool-calls.jsonl"), "utf8"))
   .trim().split("\n").map(JSON.parse);
 assert.ok(log.length >= 5, `expected >=5 log lines, got ${log.length}`);
 assert.match(log[0].timestamp, /^\d{4}-\d{2}-\d{2}T/);
 assert.equal(log[0].tool, "list_notes");
 assert.equal(log[0].params.repositoryPath, repositoryPath);
+assert.equal(log[0].params.ok, true);
+const failedLogEntry = log.find((l) => l.tool === "list_notes" && l.params.ok === false);
+assert.ok(failedLogEntry, "a failed call must be logged with ok:false, not just the attempt");
+assert.match(failedLogEntry.params.error, /Unknown repository/);
 
 // canonical knowledge untouched
 const kukuFiles = await fs.readdir(path.join(root, "Knowledge/Kuku/payments"));

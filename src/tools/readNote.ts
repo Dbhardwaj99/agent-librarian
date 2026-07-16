@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { json, type RegisterTool } from "./deps.js";
+import { logged, type RegisterTool } from "./deps.js";
 
 export const registerReadNote: RegisterTool = (server, { resolver, registry, logger }) => {
   server.registerTool(
@@ -13,11 +13,11 @@ export const registerReadNote: RegisterTool = (server, { resolver, registry, log
         note: z.string().describe("Note path relative to the project's knowledge folder"),
       },
     },
-    async ({ repositoryPath, note }) => {
-      await logger.log("read_note", { repositoryPath, note });
-      const project = resolver.resolve(repositoryPath);
-      const content = await registry.get("knowledge").readNote(project, note);
-      return { content: [{ type: "text" as const, text: content }] };
-    },
+    async ({ repositoryPath, note }) =>
+      logged(logger, "read_note", { repositoryPath, note }, async () => {
+        const project = resolver.resolve(repositoryPath);
+        const content = await registry.get("knowledge").readNote(project, note);
+        return { result: { content: [{ type: "text" as const, text: content }] } };
+      }),
   );
 };

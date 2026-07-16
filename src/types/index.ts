@@ -23,6 +23,8 @@ export interface UpdateEvent {
   confidence?: number;
   branch?: string;
   tags?: string[];
+  /** Set only when repositoryPath didn't resolve to a known project (see the "Unfiled" bucket). */
+  repositoryPath?: string;
 }
 
 /** A stored event plus the file it lives in. */

@@ -31,6 +31,10 @@ Every tool takes `repositoryPath` — the absolute path of the repo the agent is
 
 `remember` accepts: `agent`, `type`, `summary` (required); `details`, `files`, `confidence` (0–1), `branch`, `tags` (optional). The server stamps the timestamp and derives the filename from it, e.g. `2026-07-14T14-32-11-123Z.yaml`. Files are written with the exclusive flag — an existing event can never be overwritten.
 
+If `repositoryPath` doesn't resolve to a known project, `remember` never throws the event away: it falls back to `Knowledge/Stash/Unfiled/`, keeping the original `repositoryPath` on the event so it can be re-filed by hand later (response includes `unfiled: true`). Every other tool still errors cleanly on an unknown repo — there's nothing to list or read for a project that isn't registered.
+
+If `type` is `"knowledge_correction"` and `tags` are given, the response includes `possiblyAffected`: other notes matching those tags that weren't listed in `files`. A correction is only useful if it reaches every note repeating the now-wrong fact — this is a nudge toward those notes at correction time instead of relying on a later pass to remember to look for them.
+
 ## Setup
 
 ```bash
@@ -62,7 +66,7 @@ Environment overrides (all optional): `MEMORY_ROOT` (defaults to the `Memory/` f
 
 ## Call log
 
-Every tool call is appended to `Memory/MCP/logs/tool-calls.jsonl`, one JSON line per call with `timestamp`, `tool`, and `params`. Logging is best-effort and never fails a tool call. Inspect with e.g. `tail logs/tool-calls.jsonl`.
+Every tool call is appended to `Memory/MCP/logs/tool-calls.jsonl`, one JSON line per call with `timestamp`, `tool`, and `params`. `params` always includes `ok: true` on success or `ok: false` plus `error` on failure — a thrown error is logged with its outcome, not just the attempted call. Logging is best-effort and never fails a tool call. Inspect with e.g. `tail logs/tool-calls.jsonl`.
 
 ## Testing
 

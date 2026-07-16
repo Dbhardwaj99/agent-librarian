@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { json, type RegisterTool } from "./deps.js";
+import { json, logged, type RegisterTool } from "./deps.js";
 
 const MAX_RESULTS = 50;
 
@@ -15,22 +15,25 @@ export const registerSearchMemory: RegisterTool = (server, { resolver, registry,
         query: z.string().describe("Case-insensitive text to search for"),
       },
     },
-    async ({ repositoryPath, query }) => {
-      const project = resolver.resolve(repositoryPath);
-      const results = (
-        await Promise.all(registry.all().map((p) => p.search(project, query)))
-      )
-        .flat()
-        .sort((a, b) => b.score - a.score); // most query-words matched first
-      // Log after searching so total is recorded — total:0 is the high-signal case (an
-      // agent expected a memory that was never written). Query `gain` surfaces these.
-      await logger.log("search_memory", { repositoryPath, query, total: results.length });
-      return json({
-        project,
-        query,
-        total: results.length,
-        results: results.slice(0, MAX_RESULTS),
-      });
-    },
+    async ({ repositoryPath, query }) =>
+      logged(logger, "search_memory", { repositoryPath, query }, async () => {
+        const project = resolver.resolve(repositoryPath);
+        const results = (
+          await Promise.all(registry.all().map((p) => p.search(project, query)))
+        )
+          .flat()
+          .sort((a, b) => b.score - a.score); // most query-words matched first
+        // total:0 is the high-signal case (an agent expected a memory that was never
+        // written); logExtra records it either way. Query `gain` surfaces these.
+        return {
+          result: json({
+            project,
+            query,
+            total: results.length,
+            results: results.slice(0, MAX_RESULTS),
+          }),
+          logExtra: { total: results.length },
+        };
+      }),
   );
 };

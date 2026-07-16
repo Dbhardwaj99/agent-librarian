@@ -1,7 +1,13 @@
 import { z } from "zod";
-import { json, type RegisterTool } from "./deps.js";
+import { json, logged, type RegisterTool } from "./deps.js";
 
-export const registerRemember: RegisterTool = (server, { resolver, events, logger }) => {
+// Bucket for events whose repositoryPath doesn't resolve to a known project (e.g. a
+// repo not yet added to ProjectResolver, or a stray/mistaken path). Never dropping the
+// event beats a silent "Unknown repository" throw — the fallback keeps the original
+// repositoryPath on the event so a human can re-file it later.
+const UNFILED_PROJECT = "Unfiled";
+
+export const registerRemember: RegisterTool = (server, { resolver, registry, events, logger }) => {
   server.registerTool(
     "remember",
     {
@@ -20,12 +26,40 @@ export const registerRemember: RegisterTool = (server, { resolver, events, logge
         tags: z.array(z.string()).optional().describe("Topic tags"),
       },
     },
-    async ({ repositoryPath, ...event }) => {
-      await logger.log("remember", { repositoryPath, ...event });
-      const project = resolver.resolve(repositoryPath);
-      const timestamp = new Date().toISOString();
-      const file = await events.append(project, { timestamp, ...event });
-      return json({ project, file, recorded: true });
-    },
+    async ({ repositoryPath, ...event }) =>
+      logged(logger, "remember", { repositoryPath }, async () => {
+        let project: string;
+        let unfiled = false;
+        try {
+          project = resolver.resolve(repositoryPath);
+        } catch {
+          project = UNFILED_PROJECT;
+          unfiled = true;
+        }
+        const timestamp = new Date().toISOString();
+        const storedEvent = unfiled ? { timestamp, repositoryPath, ...event } : { timestamp, ...event };
+        const file = await events.append(project, storedEvent);
+
+        // A correction is only useful if it reaches every note that repeats the
+        // now-wrong fact. Nudge toward those notes instead of relying on a later
+        // pass to remember to go looking for them.
+        let possiblyAffected: { file: string; heading: string; snippet: string }[] | undefined;
+        if (!unfiled && event.type === "knowledge_correction" && event.tags?.length) {
+          const already = new Set(event.files ?? []);
+          possiblyAffected = (
+            await Promise.all(registry.all().map((p) => p.search(project, event.tags!.join(" "))))
+          )
+            .flat()
+            .filter((r) => !already.has(r.file))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5)
+            .map(({ file, heading, snippet }) => ({ file, heading, snippet }));
+        }
+
+        return {
+          result: json({ project, file, recorded: true, unfiled, possiblyAffected }),
+          logExtra: { project, unfiled, possiblyAffected: possiblyAffected?.length },
+        };
+      }),
   );
 };

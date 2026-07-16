@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { json, type RegisterTool } from "./deps.js";
+import { json, logged, type RegisterTool } from "./deps.js";
 
 export const registerListNotes: RegisterTool = (server, { resolver, registry, logger }) => {
   server.registerTool(
@@ -12,13 +12,13 @@ export const registerListNotes: RegisterTool = (server, { resolver, registry, lo
         repositoryPath: z.string().describe("Absolute path of the repository being worked on (use the current working directory)"),
       },
     },
-    async ({ repositoryPath }) => {
-      await logger.log("list_notes", { repositoryPath });
-      const project = resolver.resolve(repositoryPath);
-      const notes = (
-        await Promise.all(registry.all().map((p) => p.listNotes(project)))
-      ).flat();
-      return json({ project, notes });
-    },
+    async ({ repositoryPath }) =>
+      logged(logger, "list_notes", { repositoryPath }, async () => {
+        const project = resolver.resolve(repositoryPath);
+        const notes = (
+          await Promise.all(registry.all().map((p) => p.listNotes(project)))
+        ).flat();
+        return { result: json({ project, notes }) };
+      }),
   );
 };
