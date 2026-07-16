@@ -17,7 +17,10 @@ export const registerReadNote: RegisterTool = (server, { resolver, registry, log
       logged(logger, "read_note", { repositoryPath, note }, async () => {
         const project = resolver.resolve(repositoryPath);
         const content = await registry.get("knowledge").readNote(project, note);
-        return { result: { content: [{ type: "text" as const, text: content }] } };
+        return {
+          result: { content: [{ type: "text" as const, text: content }] },
+          logExtra: { characters: content.length },
+        };
       }),
   );
 };

@@ -18,7 +18,7 @@ export const registerListNotes: RegisterTool = (server, { resolver, registry, lo
         const notes = (
           await Promise.all(registry.all().map((p) => p.listNotes(project)))
         ).flat();
-        return { result: json({ project, notes }) };
+        return { result: json({ project, notes }), logExtra: { total: notes.length } };
       }),
   );
 };

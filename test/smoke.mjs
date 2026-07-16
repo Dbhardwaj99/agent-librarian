@@ -129,9 +129,21 @@ assert.match(log[0].timestamp, /^\d{4}-\d{2}-\d{2}T/);
 assert.equal(log[0].tool, "list_notes");
 assert.equal(log[0].params.repositoryPath, repositoryPath);
 assert.equal(log[0].params.ok, true);
+assert.equal(log[0].params.total, 1);
 const failedLogEntry = log.find((l) => l.tool === "list_notes" && l.params.ok === false);
 assert.ok(failedLogEntry, "a failed call must be logged with ok:false, not just the attempt");
 assert.match(failedLogEntry.params.error, /Unknown repository/);
+assert.ok(Number.isInteger(failedLogEntry.params.durationMs));
+const rememberLogEntry = log.find((l) => l.tool === "remember" && l.params.summary);
+assert.equal(rememberLogEntry.params.summary, "StoreManager was made thread-safe.");
+assert.equal(rememberLogEntry.params.type, "architecture_change");
+const searchLogEntry = log.find((l) => l.tool === "search_memory");
+assert.equal(searchLogEntry.params.returned, 1);
+assert.equal(searchLogEntry.params.returnedFiles, 1);
+const readLogEntry = log.find((l) => l.tool === "read_note" && l.params.ok);
+assert.ok(readLogEntry.params.characters > 0);
+const pendingLogEntry = log.find((l) => l.tool === "pending_updates");
+assert.equal(pendingLogEntry.params.total, 1);
 
 // canonical knowledge untouched
 const kukuFiles = await fs.readdir(path.join(root, "Knowledge/Kuku/payments"));

@@ -16,7 +16,10 @@ export const registerPendingUpdates: RegisterTool = (server, { resolver, events,
       logged(logger, "pending_updates", { repositoryPath }, async () => {
         const project = resolver.resolve(repositoryPath);
         const pending = await events.list(project);
-        return { result: json({ project, count: pending.length, pending }) };
+        return {
+          result: json({ project, count: pending.length, pending }),
+          logExtra: { total: pending.length },
+        };
       }),
   );
 };

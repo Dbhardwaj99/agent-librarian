@@ -18,12 +18,15 @@ assert.ok((await fs.stat(file)).size < 200 * 2, "live file should be small after
 
 // gain: seed a zero-result search and an exact-duplicate remember, expect both flagged.
 const repo = "/tmp/repo";
-const lines = [
+const archivedLines = [
   { timestamp: "t", tool: "search_memory", params: { repositoryPath: repo, query: "ghost", total: 0 } },
   { timestamp: "t", tool: "remember", params: { repositoryPath: repo, summary: "Same  Thing" } },
-  { timestamp: "t", tool: "remember", params: { repositoryPath: repo, summary: "same thing" } },
 ].map((l) => JSON.stringify(l)).join("\n") + "\n";
-await fs.writeFile(file, lines);
+const liveLines = [
+  { timestamp: "u", tool: "remember", params: { repositoryPath: repo, summary: "same thing" } },
+].map((l) => JSON.stringify(l)).join("\n") + "\n";
+await fs.writeFile(`${file}.seed`, archivedLines);
+await fs.writeFile(file, liveLines);
 const out = execFileSync("node", [new URL("../dist/gain.js", import.meta.url).pathname], {
   env: { ...process.env, LOG_FILE: file },
   encoding: "utf8",

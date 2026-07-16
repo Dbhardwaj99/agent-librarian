@@ -32,7 +32,11 @@ export const registerSearchMemory: RegisterTool = (server, { resolver, registry,
             total: results.length,
             results: results.slice(0, MAX_RESULTS),
           }),
-          logExtra: { total: results.length },
+          logExtra: {
+            total: results.length,
+            returned: Math.min(results.length, MAX_RESULTS),
+            returnedFiles: new Set(results.slice(0, MAX_RESULTS).map((r) => r.file)).size,
+          },
         };
       }),
   );

@@ -31,14 +31,21 @@ export async function logged<T>(
   baseParams: Record<string, unknown>,
   fn: () => Promise<{ result: T; logExtra?: Record<string, unknown> }>,
 ): Promise<T> {
+  const startedAt = Date.now();
   try {
     const { result, logExtra } = await fn();
-    await logger.log(tool, { ...baseParams, ok: true, ...logExtra });
+    await logger.log(tool, {
+      ...baseParams,
+      ok: true,
+      durationMs: Date.now() - startedAt,
+      ...logExtra,
+    });
     return result;
   } catch (err) {
     await logger.log(tool, {
       ...baseParams,
       ok: false,
+      durationMs: Date.now() - startedAt,
       error: err instanceof Error ? err.message : String(err),
     });
     throw err;

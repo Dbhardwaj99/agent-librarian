@@ -27,7 +27,7 @@ export const registerRemember: RegisterTool = (server, { resolver, registry, eve
       },
     },
     async ({ repositoryPath, ...event }) =>
-      logged(logger, "remember", { repositoryPath }, async () => {
+      logged(logger, "remember", { repositoryPath, ...event }, async () => {
         let project: string;
         let unfiled = false;
         try {
