@@ -137,6 +137,7 @@ assert.ok(Number.isInteger(failedLogEntry.params.durationMs));
 const rememberLogEntry = log.find((l) => l.tool === "remember" && l.params.summary);
 assert.equal(rememberLogEntry.params.summary, "StoreManager was made thread-safe.");
 assert.equal(rememberLogEntry.params.type, "architecture_change");
+assert.equal(rememberLogEntry.params.details, undefined, "details already live in Stash; don't duplicate them in logs");
 const searchLogEntry = log.find((l) => l.tool === "search_memory");
 assert.equal(searchLogEntry.params.returned, 1);
 assert.equal(searchLogEntry.params.returnedFiles, 1);

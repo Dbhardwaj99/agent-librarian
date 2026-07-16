@@ -26,8 +26,9 @@ export const registerRemember: RegisterTool = (server, { resolver, registry, eve
         tags: z.array(z.string()).optional().describe("Topic tags"),
       },
     },
-    async ({ repositoryPath, ...event }) =>
-      logged(logger, "remember", { repositoryPath, ...event }, async () => {
+    async ({ repositoryPath, ...event }) => {
+      const { details: _details, ...logEvent } = event;
+      return logged(logger, "remember", { repositoryPath, ...logEvent }, async () => {
         let project: string;
         let unfiled = false;
         try {
@@ -60,6 +61,7 @@ export const registerRemember: RegisterTool = (server, { resolver, registry, eve
           result: json({ project, file, recorded: true, unfiled, possiblyAffected }),
           logExtra: { project, unfiled, possiblyAffected: possiblyAffected?.length },
         };
-      }),
+      });
+    },
   );
 };

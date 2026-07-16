@@ -66,7 +66,7 @@ Environment overrides (all optional): `MEMORY_ROOT` (defaults to the `Memory/` f
 
 ## Call log
 
-Every tool call is appended to `Memory/MCP/logs/tool-calls.jsonl`, one JSON line per call with `timestamp`, `tool`, and `params`. New entries include `ok: true` on success or `ok: false` plus `error` on failure, and `durationMs` either way. Searches also log total/returned result counts and returned-file diversity. Logging is best-effort and never fails a tool call. Inspect with `tail logs/tool-calls.jsonl` or run `npm run gain` to audit the live and rotated logs together.
+Every tool call is appended to `Memory/MCP/logs/tool-calls.jsonl`, one JSON line per call with `timestamp`, `tool`, and `params`. New entries include `ok: true` on success or `ok: false` plus `error` on failure, and `durationMs` either way. Searches also log total/returned result counts and returned-file diversity. `remember` logs its summary and structured metadata but not the long `details` body, which already lives in the Stash. Logging is best-effort and never fails a tool call. Inspect with `tail logs/tool-calls.jsonl` or run `npm run gain` to audit the live and rotated logs together.
 
 ## Testing
 
