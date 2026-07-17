@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory Observatory</title>
+<style>
+:root{
+  --purple:#7132f5;--purple-dark:#5741d8;--purple-deep:#5b1ecf;
+  --purple-soft:rgba(133,91,251,.16);--ink:#101114;--muted:#686b82;
+  --silver:#9497a9;--line:#dedee5;--surface:#fff;--bg:#f7f7fb;
+  --green:#149e61;--green-dark:#026b3f;--shadow:rgba(0,0,0,.03) 0 4px 24px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.38 "Kraken Product","IBM Plex Sans","Helvetica Neue",Arial,sans-serif}
+header{padding:28px clamp(20px,5vw,72px) 34px;background:linear-gradient(135deg,#fff 0%,#fff 58%,#f0ebff 100%);border-bottom:1px solid var(--line)}
+.brandline{display:flex;align-items:center;gap:10px;color:var(--purple-dark);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.mark{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--purple);color:#fff;font-size:16px;box-shadow:0 4px 12px rgba(113,50,245,.22)}
+.badge,.pill{display:inline-flex;align-items:center;border-radius:8px;padding:5px 8px;background:var(--purple-soft);color:var(--purple-dark);font-size:12px;font-weight:600;letter-spacing:0}
+.badge{margin-left:4px}
+h1,h2,h3{font-family:"Kraken Brand","IBM Plex Sans","Helvetica Neue",Arial,sans-serif;letter-spacing:-.5px}
+h1{max-width:780px;margin:26px 0 8px;font-size:clamp(34px,5vw,48px);line-height:1.17}
+.lead{max-width:720px;margin:0;color:var(--muted);font-size:16px}
+.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:24px}
+button{border:0;border-radius:12px;padding:13px 16px;background:var(--purple);color:#fff;font:600 16px/1.38 inherit;cursor:pointer;box-shadow:0 4px 16px rgba(113,50,245,.16)}
+button:hover{background:var(--purple-dark)}
+button.secondary{background:#fff;color:var(--purple-dark);border:1px solid var(--purple-dark);box-shadow:var(--shadow)}
+.file-name{color:var(--muted);font-size:14px}
+main{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;max-width:1360px;margin:0 auto;padding:24px clamp(20px,5vw,72px) 56px}
+.card{grid-column:span 4;min-width:0;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.wide{grid-column:1/-1}.half{grid-column:span 6}
+.card h2{margin:0 0 16px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.stat{display:flex;gap:28px;flex-wrap:wrap}.big{font-size:32px;font-weight:700;letter-spacing:-1px}.k{margin-top:2px;color:var(--muted);font-size:12px}
+.meta{color:var(--muted);font-size:13px}.empty{color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px;margin:9px 0}.lbl{flex:0 0 150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#484b5e;font-size:14px}.track{flex:1;height:10px;overflow:hidden;border-radius:6px;background:#f0eff5}.fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--purple),#956cff)}.n{flex:0 0 34px;text-align:right;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.insight{padding:14px;border-radius:12px;background:#faf9ff;border:1px solid #ece7ff}.insight strong{display:block;margin-bottom:4px;color:var(--purple-deep);font-size:18px}.insight span{color:var(--muted);font-size:13px}
+ul{list-style:none;margin:0;padding:0}li{padding:10px 0;border-bottom:1px solid #eeeef3}li:last-child{border:0}.q{color:var(--ink);font-weight:500}.sub{display:block;margin-top:2px;color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #eeeef3}th{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}td:last-child,th:last-child{text-align:right}.count{color:var(--purple-dark);font-weight:700}
+.pulse{display:grid;grid-template-columns:repeat(14,1fr);gap:5px;align-items:end;height:90px}.day{display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:end}.heat{width:100%;min-height:6px;border-radius:4px 4px 2px 2px;background:var(--purple)}.day small{color:var(--silver);font-size:10px}
+.drop{max-width:760px;margin:20px clamp(20px,5vw,72px) 0;padding:15px 16px;border:1px dashed #b9a7f8;border-radius:12px;background:#fff;color:var(--muted);font-size:14px;cursor:pointer}.drop:hover,.drop.hi{border-color:var(--purple);background:#faf9ff;color:var(--purple-dark)}
+code{padding:2px 5px;border-radius:6px;background:#f0eff5;color:#484b5e;font-size:.9em}a{color:var(--purple-dark)}
+@media(max-width:900px){.card,.half{grid-column:1/-1}.lbl{flex-basis:120px}}
+@media(max-width:520px){.row{gap:6px}.lbl{flex-basis:105px}.pulse{gap:3px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brandline"><span class="mark">✦</span> Memory / Observatory <span class="badge">local only</span></div>
+  <h1>What your agents are looking for</h1>
+  <p class="lead">A small, private dashboard for memory activity: hot questions, rabbit holes, documentation gaps, and the projects pulling the most attention.</p>
+  <div class="actions"><button id="pick">Load logs</button><button id="local" class="secondary">Try sibling log</button><span id="fileName" class="file-name">Waiting for <code>tool-calls.jsonl</code></span></div>
+</header>
+<div id="drop" class="drop">Drop live and rotated <code>tool-calls.jsonl</code> files here, or click to choose them.</div>
+<input id="file" type="file" accept=".jsonl,.json,.txt" multiple hidden>
+<main id="out" hidden></main>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>String(s??"").toLowerCase().replace(/\s+/g," ").trim();
+const shortRepo=p=>{if(!p)return"?";const a=String(p).split("/");return a[a.length-1]||String(p)};
+const tally=xs=>[...xs.reduce((m,x)=>m.set(x,(m.get(x)||0)+1),new Map())].sort((a,b)=>b[1]-a[1]||String(a[0]).localeCompare(String(b[0])));
+const percentile=(xs,p)=>{if(!xs.length)return null;const a=[...xs].sort((x,y)=>x-y);return a[Math.floor((a.length-1)*p)]};
+const queryOf=e=>String(e?.params?.query||"").trim();
+const callerOf=e=>e?.params?.agent||e?.agent||e?.params?.agentName||"Unattributed caller";
+function classify(q){const x=norm(q);if(/camera|render|realitykit|swiftui|ui|view/.test(x))return"Rendering & UI";if(/state|architect|layer|model|flow|system/.test(x))return"Architecture";if(/save|persist|memory|stash|knowledge|note/.test(x))return"Knowledge & persistence";if(/hls|avplayer|video|reel|playback|12971/.test(x))return"Playback";if(/market|revenue|pocket|competitor|strategy/.test(x))return"Market";if(/build|test|xcode|swift|compile|error|bug/.test(x))return"Build & debugging";return"Other";}
+function bars(pairs,max=8){const top=pairs.slice(0,max),hi=top[0]?.[1]||1;return top.map(([k,v])=>`<div class="row"><div class="lbl" title="${esc(k)}">${esc(k)}</div><div class="track"><div class="fill" style="width:${100*v/hi}%"></div></div><div class="n">${v}</div></div>`).join("")||"<div class='empty'>No data yet.</div>";}
+function card(title,body,klass=""){return `<section class="card ${klass}"><h2>${title}</h2>${body}</section>`}
+function dateLabel(ts){return ts?new Date(ts).toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"unknown time";}
+function render(entries,malformed=0){
+  const out=$("out");if(!entries.length){out.innerHTML=card("No data","<div class='empty'>No valid JSON lines found.</div>","wide");out.hidden=false;return}
+  const outcomes=entries.filter(e=>typeof e.params?.ok==="boolean"),successes=outcomes.filter(e=>e.params.ok),failures=outcomes.filter(e=>!e.params.ok);
+  const searches=entries.filter(e=>e.tool==="search_memory"&&queryOf(e)&&e.params?.ok!==false),writes=entries.filter(e=>e.tool==="remember"),unfiled=writes.filter(e=>e.params?.unfiled===true);
+  const measured=searches.filter(e=>typeof e.params?.total==="number"),delivered=measured.filter(e=>typeof e.params?.returned==="number"),capped=delivered.filter(e=>e.params.total>e.params.returned);
+  const diversity=delivered.filter(e=>e.params.returned>0&&typeof e.params.returnedFiles==="number").map(e=>e.params.returnedFiles/e.params.returned);
+  const durations=entries.filter(e=>typeof e.params?.durationMs==="number"),tasked=entries.filter(e=>e.params?.taskId);
+  const queries=tally(searches.map(e=>norm(queryOf(e)))),themes=tally(searches.map(e=>classify(queryOf(e)))),callers=tally(searches.map(callerOf)),repos=tally(searches.map(e=>shortRepo(e.params?.repositoryPath)));
+  const repeated=queries.filter(([,n])=>n>1),empty=measured.filter(e=>e.params.total===0);
+  const days=tally(searches.map(e=>(e.timestamp||"").slice(0,10))).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
+  const dayMax=Math.max(1,...days.map(([,n])=>n));
+  const topQuery=queries[0]?.[0]||"none yet",topTheme=themes[0]?.[0]||"none yet",topRepo=repos[0]?.[0]||"none yet",avg=searches.length?Math.round(searches.reduce((n,e)=>n+queryOf(e).length,0)/searches.length):0;
+  const t0=entries[0]?.timestamp,t1=entries[entries.length-1]?.timestamp,recent=[...searches].reverse().slice(0,10);
+  const successRate=outcomes.length?Math.round(successes.length*100/outcomes.length):0;
+  const returnedFiles=delivered.filter(e=>typeof e.params.returnedFiles==="number").map(e=>e.params.returnedFiles);
+  const latencyRows=[...new Set(durations.map(e=>e.tool))].map(tool=>{const xs=durations.filter(e=>e.tool===tool).map(e=>e.params.durationMs);return `<tr><td>${esc(tool)}</td><td>${percentile(xs,.5)}</td><td>${percentile(xs,.95)}</td><td>${xs.length}</td></tr>`}).join("");
+  const queryRows=queries.slice(0,15).map(([q,n],i)=>`<tr><td>${i+1}</td><td>${esc(q)}</td><td class="count">${n}</td></tr>`).join("");
+  const recentRows=recent.map(e=>{const p=e.params||{},metrics=typeof p.total==="number"?` · ${p.total} matches · ${p.returnedFiles??"?"} files · ${p.durationMs??"?"} ms`:"";return `<li><span class="q">${esc(queryOf(e))}</span><span class="sub">${esc(shortRepo(p.repositoryPath))} · ${esc(dateLabel(e.timestamp))}${metrics}</span></li>`}).join("");
+  const insight=`<div class="insights"><div class="insight"><strong>${capped.length}/${delivered.length}</strong><span>searches capped</span></div><div class="insight"><strong>${diversity.length?Math.round(percentile(diversity,.5)*100):"?"}%</strong><span>median returned-file diversity</span></div><div class="insight"><strong>${tasked.length}/${entries.length}</strong><span>calls with task IDs</span></div><div class="insight"><strong>${malformed}</strong><span>malformed lines</span></div></div>`;
+  const pulse=days.length?"<div class=\"pulse\">"+days.map(([d,n])=>`<div class="day" title="${esc(d)}: ${n} searches"><div class="heat" style="height:${Math.max(8,100*n/dayMax)}%"></div><small>${esc(d.slice(5))}</small></div>`).join("")+"</div>":"<div class='empty'>No searches yet.</div>";
+  const gap=empty.length?"<ul>"+tally(empty.map(e=>queryOf(e))).slice(0,12).map(([q,n])=>`<li><span class="q">${esc(q)}</span><span class="sub">${n} empty result${n===1?"":"s"} · missing memory or vocabulary mismatch</span></li>`).join("")+"</ul>":measured.length?"<div class='empty'>No empty searches; broad ANY-term matching can hide retrieval gaps.</div>":"<div class='empty'>No result counts have been logged yet.</div>";
+  const errorBars=bars(tally(failures.map(e=>e.params.error||e.tool)));
+  const writeBars=bars(tally(writes.map(e=>e.params?.type||"legacy / unknown")));
+  const taskBars=bars(tally(entries.map(e=>e.params?.taskId||"No taskId")));
+  const latestCorpus=new Map();for(const e of entries)if(e.tool==="search_memory"&&typeof e.params?.noteCount==="number")latestCorpus.set(shortRepo(e.params.repositoryPath),e.params.noteCount);
+  const corpusRows=[...latestCorpus].map(([repo,n])=>`<tr><td>${esc(repo)}</td><td class="count">${n}</td></tr>`).join("");
+  out.innerHTML=[
+    card("Overview",`<div class="stat"><div><div class="big">${entries.length}</div><div class="k">tool calls</div></div><div><div class="big">${successRate}%</div><div class="k">success (${outcomes.length} measured)</div></div><div><div class="big">${failures.length}</div><div class="k">failed calls</div></div><div><div class="big">${writes.length}</div><div class="k">knowledge writes</div></div><div><div class="big">${unfiled.length}</div><div class="k">unfiled fallbacks</div></div></div><div class="meta" style="margin-top:14px">${esc(dateLabel(t0))} → ${esc(dateLabel(t1))} · outcome coverage ${outcomes.length}/${entries.length}</div>`,"wide"),
+    card("Retrieval signals",insight,"wide"),
+    card("Latency (handler ms)",`<table><thead><tr><th>Tool</th><th>p50</th><th>p95</th><th>n</th></tr></thead><tbody>${latencyRows||"<tr><td colspan='4' class='empty'>No latency data yet.</td></tr>"}</tbody></table>`,"half"),
+    card("Search health",`<div class="stat"><div><div class="big">${percentile(measured.map(e=>e.params.total),.5)??"?"}</div><div class="k">median matches</div></div><div><div class="big">${percentile(returnedFiles,.5)??"?"}</div><div class="k">median returned files</div></div></div><div class="meta" style="margin-top:14px">${empty.length}/${measured.length} empty · ${capped.length}/${delivered.length} capped</div>`,"half"),
+    card("Failure reasons",errorBars,"half"),card("Remember event types",writeBars,"half"),
+    card("Task/run coverage",taskBars,"half"),card("Latest corpus sizes",`<table><thead><tr><th>Repository</th><th>Notes</th></tr></thead><tbody>${corpusRows||"<tr><td colspan='2' class='empty'>No corpus sizes logged yet.</td></tr>"}</tbody></table>`,"half"),
+    card("Search pulse",pulse,"half"),card("Search themes",bars(themes),"half"),
+    card("Top queries",`<table><thead><tr><th>#</th><th>Question</th><th>Calls</th></tr></thead><tbody>${queryRows||"<tr><td colspan='3' class='empty'>No searches yet.</td></tr>"}</tbody></table>`,"half"),
+    card("Where attention goes",bars(repos),"half"),card("Task IDs",bars(tally(searches.map(e=>e.params?.taskId||"No taskId"))),"half"),card("Gap radar",gap,"half"),
+    card(`Recent search stream (${recent.length})`,recentRows?`<ul>${recentRows}</ul>`:"<div class='empty'>No searches yet.</div>","wide"),
+    card("Scope",`<div class="meta">Metrics cover only completed MCP handlers in the loaded live and rotated files. They do not observe schema rejection, process crashes, hangs, or task correctness. Durations exclude the log append.</div><div class="meta" style="margin-top:10px">Hot repository: <span class="pill">${esc(topRepo)}</span> · Average query: ${avg} chars · Repeated queries: ${repeated.length} · No data leaves this browser.</div>`,"wide")
+  ].join("");
+  out.hidden=false;$("drop").style.display="none";$("fileName").textContent=`Loaded ${entries.length} entries · ${malformed} malformed`;
+}
+function load(text,name="log"){const entries=[];let malformed=0;for(const line of String(text||"").split("\n")){if(!line.trim())continue;try{entries.push(JSON.parse(line))}catch{malformed++}}entries.sort((a,b)=>String(a.timestamp).localeCompare(String(b.timestamp)));render(entries,malformed);$("fileName").textContent=`Loaded ${name} · ${entries.length} entries · ${malformed} malformed`}
+function loadFiles(files){const list=[...files];if(list.length)Promise.all(list.map(f=>f.text())).then(parts=>load(parts.join("\n"),`${list.length} files`))}
+function loadLocal(){fetch("tool-calls.jsonl").then(r=>{if(!r.ok)throw Error("not found");return r.text()}).then(t=>load(t,"tool-calls.jsonl")).catch(()=>{$("fileName").textContent="Sibling log not available; drop a file instead"})}
+const drop=$("drop"),file=$("file");$("pick").onclick=()=>file.click();$("local").onclick=loadLocal;drop.onclick=()=>file.click();file.onchange=e=>loadFiles(e.target.files);drop.ondragover=e=>{e.preventDefault();drop.classList.add("hi")};drop.ondragleave=()=>drop.classList.remove("hi");drop.ondrop=e=>{e.preventDefault();drop.classList.remove("hi");loadFiles(e.dataTransfer.files)};loadLocal();
+</script>
+</body>
+</html>

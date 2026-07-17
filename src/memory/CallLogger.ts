@@ -8,7 +8,7 @@ import * as path from "node:path";
  *
  * Rotates when the live file reaches maxBytes: the current file is renamed to
  * `<file>.<timestamp>` and a fresh one starts. Archives are kept, not deleted —
- * `gain` reads only the live file, and pruning old archives is a manual choice.
+ * `gain` and the dashboard can include archives; pruning them is a manual choice.
  */
 export class CallLogger {
   constructor(

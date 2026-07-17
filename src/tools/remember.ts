@@ -16,8 +16,9 @@ export const registerRemember: RegisterTool = (server, { resolver, registry, eve
         "Record a proposed knowledge update as an immutable event. Never modifies canonical knowledge; the Librarian processes events later.",
       inputSchema: {
         repositoryPath: z.string().describe("Absolute path of the repository being worked on (use the current working directory)"),
+        taskId: z.string().min(1).optional().describe("Optional task/run ID shared across related memory calls"),
         agent: z.string().describe('Name of the recording agent, e.g. "Claude Code"'),
-        type: z.string().describe('Event type, e.g. "architecture_change"'),
+        type: z.string().describe('Event type, e.g. "architecture_change", "failed_attempt", "gotcha", "knowledge_correction", or "abstained"'),
         summary: z.string().describe("One-paragraph summary of the change or learning"),
         details: z.string().optional().describe("Longer free-form details"),
         files: z.array(z.string()).optional().describe("Repository files involved"),
@@ -26,9 +27,9 @@ export const registerRemember: RegisterTool = (server, { resolver, registry, eve
         tags: z.array(z.string()).optional().describe("Topic tags"),
       },
     },
-    async ({ repositoryPath, ...event }) => {
+    async ({ repositoryPath, taskId, ...event }) => {
       const { details: _details, ...logEvent } = event;
-      return logged(logger, "remember", { repositoryPath, ...logEvent }, async () => {
+      return logged(logger, "remember", { repositoryPath, taskId, ...logEvent }, async () => {
         let project: string;
         let unfiled = false;
         try {

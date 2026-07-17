@@ -9,11 +9,13 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 const root = await fs.mkdtemp(path.join(os.tmpdir(), "memory-mcp-"));
 await fs.mkdir(path.join(root, "Knowledge/Kuku/payments"), { recursive: true });
+await fs.mkdir(path.join(root, "Knowledge/MCP"), { recursive: true });
 await fs.writeFile(
   path.join(root, "Knowledge/Kuku/payments/iap.md"),
   "# IAP\n\n## StoreManager\n\nStoreManager handles all purchases.\n\n" +
     "## Coins\n\nCoins unlock premium reels and downloads.\nPremium subscription is separate.\n",
 );
+await fs.writeFile(path.join(root, "Knowledge/MCP/observability.md"), "# Observability\n");
 
 const client = new Client({ name: "smoke", version: "1.0.0" });
 await client.connect(
@@ -30,13 +32,20 @@ const call = async (name, args) => {
   return res.content[0].text;
 };
 const repositoryPath = "/Users/divyansh/Documents/kukufm-ios";
+const taskId = "smoke-run";
 
 // list_notes
-const notes = JSON.parse(await call("list_notes", { repositoryPath }));
+const notes = JSON.parse(await call("list_notes", { repositoryPath, taskId }));
 assert.deepEqual(notes.notes, ["payments/iap.md"]);
+const memoryNotes = JSON.parse(await call("list_notes", {
+  repositoryPath: "/Users/divyansh/Documents/Memory",
+  taskId,
+}));
+assert.equal(memoryNotes.project, "MCP");
+assert.deepEqual(memoryNotes.notes, ["observability.md"]);
 
 // read_note
-assert.match(await call("read_note", { repositoryPath, note: "payments/iap.md" }), /StoreManager handles/);
+assert.match(await call("read_note", { repositoryPath, note: "payments/iap.md", taskId }), /StoreManager handles/);
 
 // read_note path traversal is rejected
 const evil = await client.callTool({
@@ -46,7 +55,8 @@ const evil = await client.callTool({
 assert.equal(evil.isError, true, "traversal must be rejected");
 
 // search_memory
-const search = JSON.parse(await call("search_memory", { repositoryPath, query: "purchases" }));
+const search = JSON.parse(await call("search_memory", { repositoryPath, query: "purchases", taskId }));
+assert.equal(search.noteCount, 1);
 assert.equal(search.results.length, 1);
 assert.equal(search.results[0].heading, "StoreManager");
 assert.equal(search.results[0].file, "payments/iap.md");
@@ -70,6 +80,7 @@ assert.equal(stopwordy.results[0].score, 3, "stopwords must not count toward the
 // remember + pending_updates
 await call("remember", {
   repositoryPath,
+  taskId,
   agent: "smoke-test",
   type: "architecture_change",
   summary: "StoreManager was made thread-safe.",
@@ -77,9 +88,10 @@ await call("remember", {
   confidence: 0.95,
   tags: ["concurrency"],
 });
-const pending = JSON.parse(await call("pending_updates", { repositoryPath }));
+const pending = JSON.parse(await call("pending_updates", { repositoryPath, taskId }));
 assert.equal(pending.count, 1);
 assert.equal(pending.pending[0].event.summary, "StoreManager was made thread-safe.");
+assert.equal(pending.pending[0].event.taskId, undefined, "taskId belongs to call correlation, not the event");
 assert.match(pending.pending[0].file, /\.yaml$/);
 
 // a knowledge_correction nudges toward other notes that repeat the corrected fact,
@@ -128,6 +140,7 @@ assert.ok(log.length >= 5, `expected >=5 log lines, got ${log.length}`);
 assert.match(log[0].timestamp, /^\d{4}-\d{2}-\d{2}T/);
 assert.equal(log[0].tool, "list_notes");
 assert.equal(log[0].params.repositoryPath, repositoryPath);
+assert.equal(log[0].params.taskId, taskId);
 assert.equal(log[0].params.ok, true);
 assert.equal(log[0].params.total, 1);
 const failedLogEntry = log.find((l) => l.tool === "list_notes" && l.params.ok === false);
@@ -137,10 +150,13 @@ assert.ok(Number.isInteger(failedLogEntry.params.durationMs));
 const rememberLogEntry = log.find((l) => l.tool === "remember" && l.params.summary);
 assert.equal(rememberLogEntry.params.summary, "StoreManager was made thread-safe.");
 assert.equal(rememberLogEntry.params.type, "architecture_change");
+assert.equal(rememberLogEntry.params.taskId, taskId);
 assert.equal(rememberLogEntry.params.details, undefined, "details already live in Stash; don't duplicate them in logs");
 const searchLogEntry = log.find((l) => l.tool === "search_memory");
 assert.equal(searchLogEntry.params.returned, 1);
 assert.equal(searchLogEntry.params.returnedFiles, 1);
+assert.equal(searchLogEntry.params.noteCount, 1);
+assert.equal(searchLogEntry.params.taskId, taskId);
 const readLogEntry = log.find((l) => l.tool === "read_note" && l.params.ok);
 assert.ok(readLogEntry.params.characters > 0);
 const pendingLogEntry = log.find((l) => l.tool === "pending_updates");

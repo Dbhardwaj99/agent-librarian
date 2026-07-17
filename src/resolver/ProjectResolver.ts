@@ -7,6 +7,7 @@ import * as path from "node:path";
  * repository, add one entry here (and create its Knowledge/<name> folder).
  */
 const REPO_TO_PROJECT: Record<string, string> = {
+  "Memory": "MCP",
   "kukufm-ios": "Kuku",
   "Quest For Duskara": "Duskara",
 };

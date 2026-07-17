@@ -10,10 +10,11 @@ export const registerListNotes: RegisterTool = (server, { resolver, registry, lo
         "List every Markdown knowledge document available for the project at the given repository root path.",
       inputSchema: {
         repositoryPath: z.string().describe("Absolute path of the repository being worked on (use the current working directory)"),
+        taskId: z.string().min(1).optional().describe("Optional task/run ID shared across related memory calls"),
       },
     },
-    async ({ repositoryPath }) =>
-      logged(logger, "list_notes", { repositoryPath }, async () => {
+    async ({ repositoryPath, taskId }) =>
+      logged(logger, "list_notes", { repositoryPath, taskId }, async () => {
         const project = resolver.resolve(repositoryPath);
         const notes = (
           await Promise.all(registry.all().map((p) => p.listNotes(project)))

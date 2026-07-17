@@ -10,10 +10,11 @@ export const registerPendingUpdates: RegisterTool = (server, { resolver, events,
         "List every pending (not yet processed) update event for the project, oldest first.",
       inputSchema: {
         repositoryPath: z.string().describe("Absolute path of the repository being worked on (use the current working directory)"),
+        taskId: z.string().min(1).optional().describe("Optional task/run ID shared across related memory calls"),
       },
     },
-    async ({ repositoryPath }) =>
-      logged(logger, "pending_updates", { repositoryPath }, async () => {
+    async ({ repositoryPath, taskId }) =>
+      logged(logger, "pending_updates", { repositoryPath, taskId }, async () => {
         const project = resolver.resolve(repositoryPath);
         const pending = await events.list(project);
         return {

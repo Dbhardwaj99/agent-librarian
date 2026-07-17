@@ -19,17 +19,17 @@ Agents read knowledge through the tools below. They never edit it. When an agent
 
 ## Tools
 
-Every tool takes `repositoryPath` — the absolute path of the repo the agent is working in — and resolves it to a knowledge project internally.
+Every tool takes `repositoryPath` — the absolute path of the repo the agent is working in — and resolves it to a knowledge project internally. Every tool also accepts an optional `taskId`; reuse one ID across a task to connect searches, reads, writes, and outcomes in the log.
 
 | Tool | Purpose |
 |------|---------|
 | `list_notes(repositoryPath)` | Every Markdown document for the project |
 | `read_note(repositoryPath, note)` | Full content of one note (path from `list_notes`) |
-| `search_memory(repositoryPath, query)` | Case-insensitive text search; returns file, nearest heading, snippet, line |
+| `search_memory(repositoryPath, query)` | Case-insensitive text search; returns corpus note count, file, nearest heading, snippet, line |
 | `remember(repositoryPath, …event)` | Append an immutable update event to the Stash |
 | `pending_updates(repositoryPath)` | All unprocessed events for the project, oldest first |
 
-`remember` accepts: `agent`, `type`, `summary` (required); `details`, `files`, `confidence` (0–1), `branch`, `tags` (optional). The server stamps the timestamp and derives the filename from it, e.g. `2026-07-14T14-32-11-123Z.yaml`. Files are written with the exclusive flag — an existing event can never be overwritten.
+`remember` accepts: `agent`, `type`, `summary` (required); `details`, `files`, `confidence` (0–1), `branch`, `tags` (optional). Use `failed_attempt`, `gotcha`, `knowledge_correction`, or `abstained` when a durable negative lesson matters; successful changes keep their normal domain type. The server stamps the timestamp and derives the filename from it, e.g. `2026-07-14T14-32-11-123Z.yaml`. Files are written with the exclusive flag — an existing event can never be overwritten.
 
 If `repositoryPath` doesn't resolve to a known project, `remember` never throws the event away: it falls back to `Knowledge/Stash/Unfiled/`, keeping the original `repositoryPath` on the event so it can be re-filed by hand later (response includes `unfiled: true`). Every other tool still errors cleanly on an unknown repo — there's nothing to list or read for a project that isn't registered.
 
@@ -66,7 +66,7 @@ Environment overrides (all optional): `MEMORY_ROOT` (defaults to the `Memory/` f
 
 ## Call log
 
-Every tool call is appended to `Memory/MCP/logs/tool-calls.jsonl`, one JSON line per call with `timestamp`, `tool`, and `params`. New entries include `ok: true` on success or `ok: false` plus `error` on failure, and `durationMs` either way. Searches also log total/returned result counts and returned-file diversity. `remember` logs its summary and structured metadata but not the long `details` body, which already lives in the Stash. Logging is best-effort and never fails a tool call. Inspect with `tail logs/tool-calls.jsonl` or run `npm run gain` to audit the live and rotated logs together.
+Every tool call is appended to `Memory/MCP/logs/tool-calls.jsonl`, one JSON line per call with `timestamp`, `tool`, and `params`. New entries include `ok: true` on success or `ok: false` plus `error` on failure, and `durationMs` either way. Searches also log corpus note count, total/returned result counts, and returned-file diversity. When supplied, `taskId` appears on every tool's log entry. `remember` logs its summary and structured metadata but not the long `details` body, which already lives in the Stash. Logging is best-effort and never fails a tool call. Inspect with `tail logs/tool-calls.jsonl`, open `logs/dashboard.html`, or run `npm run gain` to audit the live and rotated logs together.
 
 ## Testing
 

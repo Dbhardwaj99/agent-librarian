@@ -11,10 +11,11 @@ export const registerReadNote: RegisterTool = (server, { resolver, registry, log
       inputSchema: {
         repositoryPath: z.string().describe("Absolute path of the repository being worked on (use the current working directory)"),
         note: z.string().describe("Note path relative to the project's knowledge folder"),
+        taskId: z.string().min(1).optional().describe("Optional task/run ID shared across related memory calls"),
       },
     },
-    async ({ repositoryPath, note }) =>
-      logged(logger, "read_note", { repositoryPath, note }, async () => {
+    async ({ repositoryPath, note, taskId }) =>
+      logged(logger, "read_note", { repositoryPath, note, taskId }, async () => {
         const project = resolver.resolve(repositoryPath);
         const content = await registry.get("knowledge").readNote(project, note);
         return {
