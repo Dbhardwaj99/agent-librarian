@@ -6,48 +6,53 @@
 <title>Memory Observatory</title>
 <style>
 :root{
-  --purple:#7132f5;--purple-dark:#5741d8;--purple-deep:#5b1ecf;
-  --purple-soft:rgba(133,91,251,.16);--ink:#101114;--muted:#686b82;
-  --silver:#9497a9;--line:#dedee5;--surface:#fff;--bg:#f7f7fb;
-  --green:#149e61;--green-dark:#026b3f;--shadow:rgba(0,0,0,.03) 0 4px 24px;
+  --violet:#9b7cff;--cyan:#29d7ff;--pink:#ff6ec7;--amber:#ffbd59;--lime:#83f28f;
+  --ink:#f8f9ff;--muted:#aeb5d1;--line:rgba(255,255,255,.1);
+  --surface:rgba(17,24,52,.72);--surface-strong:#151d3d;--bg:#070b19;
+  --shadow:0 22px 60px rgba(0,0,0,.28);
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.38 "Kraken Product","IBM Plex Sans","Helvetica Neue",Arial,sans-serif}
-header{padding:28px clamp(20px,5vw,72px) 34px;background:linear-gradient(135deg,#fff 0%,#fff 58%,#f0ebff 100%);border-bottom:1px solid var(--line)}
-.brandline{display:flex;align-items:center;gap:10px;color:var(--purple-dark);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
-.mark{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--purple);color:#fff;font-size:16px;box-shadow:0 4px 12px rgba(113,50,245,.22)}
-.badge,.pill{display:inline-flex;align-items:center;border-radius:8px;padding:5px 8px;background:var(--purple-soft);color:var(--purple-dark);font-size:12px;font-weight:600;letter-spacing:0}
+body{min-height:100vh;margin:0;background:radial-gradient(circle at 15% 8%,rgba(93,69,255,.25),transparent 30%),radial-gradient(circle at 88% 14%,rgba(41,215,255,.16),transparent 28%),radial-gradient(circle at 65% 85%,rgba(255,110,199,.11),transparent 30%),var(--bg);color:var(--ink);font:16px/1.45 Inter,"SF Pro Display","Helvetica Neue",Arial,sans-serif}
+header{position:relative;overflow:hidden;padding:32px clamp(20px,6vw,88px) 46px;border-bottom:1px solid var(--line)}
+header:after{position:absolute;right:-7%;bottom:-65%;width:460px;height:460px;border:1px solid rgba(255,255,255,.08);border-radius:50%;box-shadow:0 0 0 55px rgba(155,124,255,.035),0 0 0 110px rgba(41,215,255,.025);content:"";pointer-events:none}
+.brandline{display:flex;align-items:center;gap:10px;color:#d9d2ff;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.mark{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff;font-size:17px;box-shadow:0 0 24px rgba(155,124,255,.45)}
+.badge,.pill{display:inline-flex;align-items:center;border:1px solid rgba(155,124,255,.25);border-radius:999px;padding:5px 9px;background:rgba(155,124,255,.12);color:#c9bdff;font-size:12px;font-weight:700;letter-spacing:0}
 .badge{margin-left:4px}
-h1,h2,h3{font-family:"Kraken Brand","IBM Plex Sans","Helvetica Neue",Arial,sans-serif;letter-spacing:-.5px}
-h1{max-width:780px;margin:26px 0 8px;font-size:clamp(34px,5vw,48px);line-height:1.17}
-.lead{max-width:720px;margin:0;color:var(--muted);font-size:16px}
+h1,h2,h3{letter-spacing:-.04em}
+h1{position:relative;z-index:1;max-width:900px;margin:34px 0 12px;font-size:clamp(42px,6vw,76px);line-height:1.02;background:linear-gradient(95deg,#fff 5%,#cfc5ff 45%,#8beaff 80%,#ff9ed8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{position:relative;z-index:1;max-width:760px;margin:0;color:var(--muted);font-size:clamp(16px,2vw,19px)}
 .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:24px}
-button{border:0;border-radius:12px;padding:13px 16px;background:var(--purple);color:#fff;font:600 16px/1.38 inherit;cursor:pointer;box-shadow:0 4px 16px rgba(113,50,245,.16)}
-button:hover{background:var(--purple-dark)}
-button.secondary{background:#fff;color:var(--purple-dark);border:1px solid var(--purple-dark);box-shadow:var(--shadow)}
+button{border:0;border-radius:12px;padding:13px 17px;background:linear-gradient(135deg,#8267ff,var(--pink));color:#fff;font:700 15px/1.38 inherit;cursor:pointer;box-shadow:0 10px 28px rgba(130,103,255,.25);transition:transform .2s,filter .2s}
+button:hover{filter:brightness(1.1);transform:translateY(-1px)}
+button.secondary{background:rgba(255,255,255,.06);color:#e7e3ff;border:1px solid var(--line);box-shadow:none}
 .file-name{color:var(--muted);font-size:14px}
-main{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;max-width:1360px;margin:0 auto;padding:24px clamp(20px,5vw,72px) 56px}
-.card{grid-column:span 4;min-width:0;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+main{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px;max-width:1480px;margin:0 auto;padding:28px clamp(20px,5vw,72px) 72px}
+.card{grid-column:span 4;min-width:0;padding:22px;background:linear-gradient(145deg,rgba(26,35,74,.85),var(--surface));border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);backdrop-filter:blur(18px);transition:border-color .2s,transform .2s}
+.card:hover{border-color:rgba(155,124,255,.28);transform:translateY(-2px)}
 .wide{grid-column:1/-1}.half{grid-column:span 6}
-.card h2{margin:0 0 16px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.stat{display:flex;gap:28px;flex-wrap:wrap}.big{font-size:32px;font-weight:700;letter-spacing:-1px}.k{margin-top:2px;color:var(--muted);font-size:12px}
+.card h2{margin:0 0 18px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#c6cce2}
+.stat{display:flex;gap:34px;flex-wrap:wrap}.big{font-size:34px;font-weight:800;letter-spacing:-1.5px;background:linear-gradient(100deg,#fff,#b9c8ff);-webkit-background-clip:text;background-clip:text;color:transparent}.k{margin-top:2px;color:var(--muted);font-size:12px}
 .meta{color:var(--muted);font-size:13px}.empty{color:var(--muted)}
-.row{display:flex;align-items:center;gap:10px;margin:9px 0}.lbl{flex:0 0 150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#484b5e;font-size:14px}.track{flex:1;height:10px;overflow:hidden;border-radius:6px;background:#f0eff5}.fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--purple),#956cff)}.n{flex:0 0 34px;text-align:right;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
-.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.insight{padding:14px;border-radius:12px;background:#faf9ff;border:1px solid #ece7ff}.insight strong{display:block;margin-bottom:4px;color:var(--purple-deep);font-size:18px}.insight span{color:var(--muted);font-size:13px}
-ul{list-style:none;margin:0;padding:0}li{padding:10px 0;border-bottom:1px solid #eeeef3}li:last-child{border:0}.q{color:var(--ink);font-weight:500}.sub{display:block;margin-top:2px;color:var(--muted);font-size:12px}
-table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #eeeef3}th{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}td:last-child,th:last-child{text-align:right}.count{color:var(--purple-dark);font-weight:700}
-.pulse{display:grid;grid-template-columns:repeat(14,1fr);gap:5px;align-items:end;height:90px}.day{display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:end}.heat{width:100%;min-height:6px;border-radius:4px 4px 2px 2px;background:var(--purple)}.day small{color:var(--silver);font-size:10px}
-.drop{max-width:760px;margin:20px clamp(20px,5vw,72px) 0;padding:15px 16px;border:1px dashed #b9a7f8;border-radius:12px;background:#fff;color:var(--muted);font-size:14px;cursor:pointer}.drop:hover,.drop.hi{border-color:var(--purple);background:#faf9ff;color:var(--purple-dark)}
-code{padding:2px 5px;border-radius:6px;background:#f0eff5;color:#484b5e;font-size:.9em}a{color:var(--purple-dark)}
+.row{display:flex;align-items:center;gap:10px;margin:10px 0}.lbl{flex:0 0 150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dce1f4;font-size:14px}.track{flex:1;height:9px;overflow:hidden;border-radius:8px;background:rgba(255,255,255,.07)}.fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--bar,var(--violet)),color-mix(in srgb,var(--bar,var(--violet)),white 35%));box-shadow:0 0 16px color-mix(in srgb,var(--bar,var(--violet)),transparent 55%)}.n{flex:0 0 34px;text-align:right;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.insight{padding:16px;border-radius:15px;background:rgba(255,255,255,.045);border:1px solid var(--line)}.insight:nth-child(4n+1){border-color:rgba(155,124,255,.28)}.insight:nth-child(4n+2){border-color:rgba(41,215,255,.25)}.insight:nth-child(4n+3){border-color:rgba(255,110,199,.25)}.insight:nth-child(4n){border-color:rgba(131,242,143,.22)}.insight strong{display:block;margin-bottom:4px;color:#fff;font-size:21px}.insight span{color:var(--muted);font-size:13px}
+ul{list-style:none;margin:0;padding:0}li{padding:11px 0;border-bottom:1px solid var(--line)}li:last-child{border:0}.q{color:var(--ink);font-weight:600}.sub{display:block;margin-top:3px;color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:11px 8px;text-align:left;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}td:last-child,th:last-child{text-align:right}.count{color:var(--cyan);font-weight:800}
+.chart{width:100%;min-height:230px}.chart svg{display:block;width:100%;height:auto;overflow:visible}.gridline{stroke:rgba(255,255,255,.07);stroke-width:1}.axis{fill:#7f89aa;font-size:10px}.retrieval-line{fill:none;stroke:var(--cyan);stroke-width:3;filter:drop-shadow(0 0 7px rgba(41,215,255,.45))}.write-line{fill:none;stroke:var(--pink);stroke-width:3;filter:drop-shadow(0 0 7px rgba(255,110,199,.4))}.area{fill:url(#areaGradient)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:12px}.key{display:inline-flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:var(--dot);box-shadow:0 0 10px var(--dot)}
+.donut-wrap{display:grid;grid-template-columns:minmax(150px,210px) 1fr;align-items:center;gap:30px}.donut{position:relative;aspect-ratio:1;border-radius:50%;background:var(--donut);box-shadow:inset 0 0 30px rgba(0,0,0,.18),0 0 35px rgba(155,124,255,.12)}.donut:after{position:absolute;inset:24%;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:#111833;color:#fff;font-size:28px;font-weight:800;content:attr(data-total)}.donut-legend{display:grid;gap:11px}.donut-item{display:flex;align-items:center;justify-content:space-between;gap:16px;color:var(--muted);font-size:13px}.donut-item strong{color:#fff}
+.truth{display:grid;grid-template-columns:1fr 1fr;gap:14px}.truth-item{padding:16px;border-radius:15px;background:rgba(255,255,255,.04);border:1px solid var(--line)}.truth-item strong{display:block;margin-bottom:5px;color:#fff}.truth-item.observed{border-color:rgba(131,242,143,.25)}.truth-item.unproven{border-color:rgba(255,189,89,.25)}
+.drop{max-width:760px;margin:22px clamp(20px,5vw,72px) 0;padding:15px 17px;border:1px dashed rgba(155,124,255,.5);border-radius:14px;background:rgba(21,29,61,.62);color:var(--muted);font-size:14px;cursor:pointer}.drop:hover,.drop.hi{border-color:var(--cyan);background:rgba(41,215,255,.06);color:#d9f8ff}
+code{padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);color:#d7dcf2;font-size:.9em}a{color:var(--cyan)}
 @media(max-width:900px){.card,.half{grid-column:1/-1}.lbl{flex-basis:120px}}
-@media(max-width:520px){.row{gap:6px}.lbl{flex-basis:105px}.pulse{gap:3px}}
+@media(max-width:620px){h1{font-size:42px}.row{gap:6px}.lbl{flex-basis:105px}.donut-wrap,.truth{grid-template-columns:1fr}.donut{max-width:190px;margin:auto}}
 </style>
 </head>
 <body>
 <header>
-  <div class="brandline"><span class="mark">✦</span> Memory / Observatory <span class="badge">local only</span></div>
-  <h1>What your agents are looking for</h1>
-  <p class="lead">A small, private dashboard for memory activity: hot questions, rabbit holes, documentation gaps, and the projects pulling the most attention.</p>
+  <div class="brandline"><span class="mark">✦</span> Memory Observatory <span class="badge">local · private</span></div>
+  <h1>Knowledge that compounds.</h1>
+  <p class="lead">See how agents retrieve, reuse, and grow durable project knowledge—without sending your logs anywhere.</p>
   <div class="actions"><button id="pick">Load logs</button><button id="local" class="secondary">Try sibling log</button><span id="fileName" class="file-name">Waiting for <code>tool-calls.jsonl</code></span></div>
 </header>
 <div id="drop" class="drop">Drop live and rotated <code>tool-calls.jsonl</code> files here, or click to choose them.</div>
@@ -64,9 +69,20 @@ const percentile=(xs,p)=>{if(!xs.length)return null;const a=[...xs].sort((x,y)=>
 const queryOf=e=>String(e?.params?.query||"").trim();
 const callerOf=e=>e?.params?.agent||e?.agent||e?.params?.agentName||"Unattributed caller";
 function classify(q){const x=norm(q);if(/camera|render|realitykit|swiftui|ui|view/.test(x))return"Rendering & UI";if(/state|architect|layer|model|flow|system/.test(x))return"Architecture";if(/save|persist|memory|stash|knowledge|note/.test(x))return"Knowledge & persistence";if(/hls|avplayer|video|reel|playback|12971/.test(x))return"Playback";if(/market|revenue|pocket|competitor|strategy/.test(x))return"Market";if(/build|test|xcode|swift|compile|error|bug/.test(x))return"Build & debugging";return"Other";}
-function bars(pairs,max=8){const top=pairs.slice(0,max),hi=top[0]?.[1]||1;return top.map(([k,v])=>`<div class="row"><div class="lbl" title="${esc(k)}">${esc(k)}</div><div class="track"><div class="fill" style="width:${100*v/hi}%"></div></div><div class="n">${v}</div></div>`).join("")||"<div class='empty'>No data yet.</div>";}
+function bars(pairs,max=8){const colors=["#9b7cff","#29d7ff","#ff6ec7","#ffbd59","#83f28f"],top=pairs.slice(0,max),hi=top[0]?.[1]||1;return top.map(([k,v],i)=>`<div class="row"><div class="lbl" title="${esc(k)}">${esc(k)}</div><div class="track"><div class="fill" style="--bar:${colors[i%colors.length]};width:${100*v/hi}%"></div></div><div class="n">${v}</div></div>`).join("")||"<div class='empty'>No data yet.</div>";}
 function card(title,body,klass=""){return `<section class="card ${klass}"><h2>${title}</h2>${body}</section>`}
 function dateLabel(ts){return ts?new Date(ts).toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"unknown time";}
+function activityChart(entries){
+  const rows=tally(entries.map(e=>(e.timestamp||"").slice(0,10))).map(([d])=>d).sort().slice(-14).map(day=>({day,retrievals:entries.filter(e=>(e.timestamp||"").startsWith(day)&&["search_memory","read_note"].includes(e.tool)&&e.params?.ok!==false).length,writes:entries.filter(e=>(e.timestamp||"").startsWith(day)&&e.tool==="remember"&&e.params?.ok!==false).length}));
+  if(!rows.length)return"<div class='empty'>No dated activity yet.</div>";
+  const w=760,h=220,p=28,max=Math.max(1,...rows.flatMap(r=>[r.retrievals,r.writes])),x=i=>p+i*(w-p*2)/Math.max(1,rows.length-1),y=v=>h-p-v*(h-p*2)/max,points=key=>rows.map((r,i)=>`${x(i)},${y(r[key])}`).join(" ");
+  return `<div class="chart"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Daily retrieval and knowledge write trend"><defs><linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#29d7ff" stop-opacity=".24"/><stop offset="1" stop-color="#29d7ff" stop-opacity="0"/></linearGradient></defs>${[.25,.5,.75,1].map(n=>`<line class="gridline" x1="${p}" x2="${w-p}" y1="${y(max*n)}" y2="${y(max*n)}"/>`).join("")}<polygon class="area" points="${p},${h-p} ${points("retrievals")} ${w-p},${h-p}"/><polyline class="retrieval-line" points="${points("retrievals")}"/><polyline class="write-line" points="${points("writes")}"/>${rows.map((r,i)=>`<text class="axis" text-anchor="middle" x="${x(i)}" y="${h-7}">${esc(r.day.slice(5))}</text>`).join("")}</svg><div class="legend"><span class="key"><i class="dot" style="--dot:var(--cyan)"></i>retrievals</span><span class="key"><i class="dot" style="--dot:var(--pink)"></i>knowledge writes</span></div></div>`;
+}
+function toolDonut(entries){
+  const colors=["#9b7cff","#29d7ff","#ff6ec7","#ffbd59","#83f28f"],pairs=tally(entries.map(e=>e.tool)),total=entries.length;let at=0;
+  const stops=pairs.map(([,n],i)=>{const start=at;at+=100*n/total;return `${colors[i%colors.length]} ${start}% ${at}%`}).join(",");
+  return `<div class="donut-wrap"><div class="donut" data-total="${total}" style="--donut:conic-gradient(${stops})"></div><div class="donut-legend">${pairs.map(([tool,n],i)=>`<div class="donut-item"><span class="key"><i class="dot" style="--dot:${colors[i%colors.length]}"></i>${esc(tool)}</span><strong>${n}</strong></div>`).join("")}</div></div>`;
+}
 function render(entries,malformed=0){
   const out=$("out");if(!entries.length){out.innerHTML=card("No data","<div class='empty'>No valid JSON lines found.</div>","wide");out.hidden=false;return}
   const outcomes=entries.filter(e=>typeof e.params?.ok==="boolean"),successes=outcomes.filter(e=>e.params.ok),failures=outcomes.filter(e=>!e.params.ok);
@@ -76,17 +92,15 @@ function render(entries,malformed=0){
   const durations=entries.filter(e=>typeof e.params?.durationMs==="number"),tasked=entries.filter(e=>e.params?.taskId);
   const queries=tally(searches.map(e=>norm(queryOf(e)))),themes=tally(searches.map(e=>classify(queryOf(e)))),callers=tally(searches.map(callerOf)),repos=tally(searches.map(e=>shortRepo(e.params?.repositoryPath)));
   const repeated=queries.filter(([,n])=>n>1),empty=measured.filter(e=>e.params.total===0);
-  const days=tally(searches.map(e=>(e.timestamp||"").slice(0,10))).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
-  const dayMax=Math.max(1,...days.map(([,n])=>n));
   const topQuery=queries[0]?.[0]||"none yet",topTheme=themes[0]?.[0]||"none yet",topRepo=repos[0]?.[0]||"none yet",avg=searches.length?Math.round(searches.reduce((n,e)=>n+queryOf(e).length,0)/searches.length):0;
   const t0=entries[0]?.timestamp,t1=entries[entries.length-1]?.timestamp,recent=[...searches].reverse().slice(0,10);
   const successRate=outcomes.length?Math.round(successes.length*100/outcomes.length):0;
   const returnedFiles=delivered.filter(e=>typeof e.params.returnedFiles==="number").map(e=>e.params.returnedFiles);
+  const retrievals=entries.filter(e=>["search_memory","read_note"].includes(e.tool)&&e.params?.ok!==false),readCalls=entries.filter(e=>e.tool==="read_note"),measuredReads=readCalls.filter(e=>typeof e.params?.characters==="number"),readCharacters=measuredReads.reduce((n,e)=>n+e.params.characters,0),estimatedTokens=Math.round(readCharacters/4),activeDays=new Set(entries.map(e=>(e.timestamp||"").slice(0,10)).filter(Boolean)).size,taskCount=new Set(tasked.map(e=>e.params.taskId)).size;
   const latencyRows=[...new Set(durations.map(e=>e.tool))].map(tool=>{const xs=durations.filter(e=>e.tool===tool).map(e=>e.params.durationMs);return `<tr><td>${esc(tool)}</td><td>${percentile(xs,.5)}</td><td>${percentile(xs,.95)}</td><td>${xs.length}</td></tr>`}).join("");
   const queryRows=queries.slice(0,15).map(([q,n],i)=>`<tr><td>${i+1}</td><td>${esc(q)}</td><td class="count">${n}</td></tr>`).join("");
   const recentRows=recent.map(e=>{const p=e.params||{},metrics=typeof p.total==="number"?` · ${p.total} matches · ${p.returnedFiles??"?"} files · ${p.durationMs??"?"} ms`:"";return `<li><span class="q">${esc(queryOf(e))}</span><span class="sub">${esc(shortRepo(p.repositoryPath))} · ${esc(dateLabel(e.timestamp))}${metrics}</span></li>`}).join("");
   const insight=`<div class="insights"><div class="insight"><strong>${capped.length}/${delivered.length}</strong><span>searches capped</span></div><div class="insight"><strong>${diversity.length?Math.round(percentile(diversity,.5)*100):"?"}%</strong><span>median returned-file diversity</span></div><div class="insight"><strong>${tasked.length}/${entries.length}</strong><span>calls with task IDs</span></div><div class="insight"><strong>${malformed}</strong><span>malformed lines</span></div></div>`;
-  const pulse=days.length?"<div class=\"pulse\">"+days.map(([d,n])=>`<div class="day" title="${esc(d)}: ${n} searches"><div class="heat" style="height:${Math.max(8,100*n/dayMax)}%"></div><small>${esc(d.slice(5))}</small></div>`).join("")+"</div>":"<div class='empty'>No searches yet.</div>";
   const gap=empty.length?"<ul>"+tally(empty.map(e=>queryOf(e))).slice(0,12).map(([q,n])=>`<li><span class="q">${esc(q)}</span><span class="sub">${n} empty result${n===1?"":"s"} · missing memory or vocabulary mismatch</span></li>`).join("")+"</ul>":measured.length?"<div class='empty'>No empty searches; broad ANY-term matching can hide retrieval gaps.</div>":"<div class='empty'>No result counts have been logged yet.</div>";
   const errorBars=bars(tally(failures.map(e=>e.params.error||e.tool)));
   const writeBars=bars(tally(writes.map(e=>e.params?.type||"legacy / unknown")));
@@ -95,12 +109,16 @@ function render(entries,malformed=0){
   const corpusRows=[...latestCorpus].map(([repo,n])=>`<tr><td>${esc(repo)}</td><td class="count">${n}</td></tr>`).join("");
   out.innerHTML=[
     card("Overview",`<div class="stat"><div><div class="big">${entries.length}</div><div class="k">tool calls</div></div><div><div class="big">${successRate}%</div><div class="k">success (${outcomes.length} measured)</div></div><div><div class="big">${failures.length}</div><div class="k">failed calls</div></div><div><div class="big">${writes.length}</div><div class="k">knowledge writes</div></div><div><div class="big">${unfiled.length}</div><div class="k">unfiled fallbacks</div></div></div><div class="meta" style="margin-top:14px">${esc(dateLabel(t0))} → ${esc(dateLabel(t1))} · outcome coverage ${outcomes.length}/${entries.length}</div>`,"wide"),
+    card("Memory impact evidence",`<div class="insights"><div class="insight"><strong>${retrievals.length}</strong><span>memory retrieval calls without explicit failure</span></div><div class="insight"><strong>${writes.length}</strong><span>durable knowledge writes</span></div><div class="insight"><strong>≈${estimatedTokens.toLocaleString()}</strong><span>context tokens served from logged full-note reads</span></div><div class="insight"><strong>${activeDays}</strong><span>active days across loaded logs</span></div><div class="insight"><strong>${taskCount}</strong><span>correlated task IDs</span></div></div><div class="meta" style="margin-top:14px">Tokens served are estimated as logged note characters ÷ 4 (character coverage ${measuredReads.length}/${readCalls.length} reads). They are not token savings; proving savings requires a memory-on vs memory-off evaluation.</div>`,"wide"),
+    card("Daily memory activity",activityChart(entries),"wide"),
+    card("Tool mix",toolDonut(entries),"half"),
+    card("What the data proves",`<div class="truth"><div class="truth-item observed"><strong>Observed now</strong><span class="meta">Persistent writes, searches, note reads, failures, latency, and activity across days.</span></div><div class="truth-item unproven"><strong>Needs a controlled evaluation</strong><span class="meta">Answer-quality lift, facts reused across sessions, and net model-token savings.</span></div></div>`,"half"),
     card("Retrieval signals",insight,"wide"),
     card("Latency (handler ms)",`<table><thead><tr><th>Tool</th><th>p50</th><th>p95</th><th>n</th></tr></thead><tbody>${latencyRows||"<tr><td colspan='4' class='empty'>No latency data yet.</td></tr>"}</tbody></table>`,"half"),
     card("Search health",`<div class="stat"><div><div class="big">${percentile(measured.map(e=>e.params.total),.5)??"?"}</div><div class="k">median matches</div></div><div><div class="big">${percentile(returnedFiles,.5)??"?"}</div><div class="k">median returned files</div></div></div><div class="meta" style="margin-top:14px">${empty.length}/${measured.length} empty · ${capped.length}/${delivered.length} capped</div>`,"half"),
     card("Failure reasons",errorBars,"half"),card("Remember event types",writeBars,"half"),
     card("Task/run coverage",taskBars,"half"),card("Latest corpus sizes",`<table><thead><tr><th>Repository</th><th>Notes</th></tr></thead><tbody>${corpusRows||"<tr><td colspan='2' class='empty'>No corpus sizes logged yet.</td></tr>"}</tbody></table>`,"half"),
-    card("Search pulse",pulse,"half"),card("Search themes",bars(themes),"half"),
+    card("Search themes",bars(themes),"half"),
     card("Top queries",`<table><thead><tr><th>#</th><th>Question</th><th>Calls</th></tr></thead><tbody>${queryRows||"<tr><td colspan='3' class='empty'>No searches yet.</td></tr>"}</tbody></table>`,"half"),
     card("Where attention goes",bars(repos),"half"),card("Task IDs",bars(tally(searches.map(e=>e.params?.taskId||"No taskId"))),"half"),card("Gap radar",gap,"half"),
     card(`Recent search stream (${recent.length})`,recentRows?`<ul>${recentRows}</ul>`:"<div class='empty'>No searches yet.</div>","wide"),
