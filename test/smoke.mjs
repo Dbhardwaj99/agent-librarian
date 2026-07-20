@@ -71,8 +71,10 @@ assert.equal(search.results[0].file, "payments/iap.md");
 const ranked = JSON.parse(await call("search_memory", { repositoryPath, query: "coins premium reels" }));
 assert.equal(ranked.results[0].score, 3, "line matching all three words should rank first");
 assert.equal(ranked.results[0].heading, "Coins");
-const scores = ranked.results.map((r) => r.score);
-assert.deepEqual(scores, [...scores].sort((a, b) => b - a), "results must be sorted by score desc");
+assert.match(ranked.results[0].context, /Coins unlock premium reels/);
+assert.ok(ranked.results[0].matchCount >= 1);
+const ranks = ranked.results.map((r) => r.rank);
+assert.deepEqual(ranks, [...ranks].sort((a, b) => b - a), "results must be sorted by rank desc");
 
 // stopwords don't inflate scores: a filler-word-heavy query still ranks the
 // line sharing the most SIGNIFICANT words first, not whichever line happens
@@ -82,6 +84,10 @@ const stopwordy = JSON.parse(
 );
 assert.equal(stopwordy.results[0].heading, "Coins");
 assert.equal(stopwordy.results[0].score, 3, "stopwords must not count toward the score");
+
+// Exact token matching must not treat "animation" as "navigation".
+const exact = JSON.parse(await call("search_memory", { repositoryPath, query: "navigation" }));
+assert.equal(exact.results.length, 0, "substring matches must not create false positives");
 
 const navigationOnly = JSON.parse(
   await call("search_memory", { repositoryPath, query: "network errors retry" }),

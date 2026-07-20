@@ -1,15 +1,21 @@
-/** A search hit inside a Markdown note. */
+/** A ranked, context-dense hit inside one Markdown section. */
 export interface SearchResult {
   /** Note path relative to the project's knowledge folder. */
   file: string;
   /** Nearest Markdown heading above the match ("" if none). */
   heading: string;
-  /** The matching line, trimmed. */
+  /** The strongest matching line, trimmed. */
   snippet: string;
   /** 1-based line number of the match. */
   line: number;
-  /** How many distinct query words matched this line — used to rank relevance. */
+  /** How many distinct query words matched the strongest line. */
   score: number;
+  /** Weighted ranking score used across the whole corpus. */
+  rank: number;
+  /** Number of matching lines in this note section. */
+  matchCount: number;
+  /** A small context window around the strongest matching line. */
+  context: string;
 }
 
 /** An immutable proposed-update event written to the Stash. */

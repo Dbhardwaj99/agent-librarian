@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { KnowledgeProvider } from "./KnowledgeProvider.js";
-import type { SearchEngine } from "../memory/SearchEngine.js";
+import { tokenize, type SearchContext, type SearchEngine } from "../memory/SearchEngine.js";
 import type { SearchResult } from "../types/index.js";
 
 /**
@@ -45,11 +45,16 @@ export class MarkdownKnowledgeProvider implements KnowledgeProvider {
 
   async search(project: string, query: string): Promise<SearchResult[]> {
     const notes = await this.listNotes(project);
-    const results: SearchResult[] = [];
-    for (const note of notes) {
-      const content = await this.readNote(project, note);
-      results.push(...this.searchEngine.search(note, content, query));
+    const contents = await Promise.all(
+      notes.map(async (note) => [note, await this.readNote(project, note)] as const),
+    );
+    const documentFrequency = new Map<string, number>();
+    for (const [, content] of contents) {
+      for (const term of new Set(tokenize(content))) {
+        documentFrequency.set(term, (documentFrequency.get(term) ?? 0) + 1);
+      }
     }
-    return results;
+    const context: SearchContext = { documentCount: contents.length, documentFrequency };
+    return contents.flatMap(([note, content]) => this.searchEngine.search(note, content, query, context));
   }
 }
