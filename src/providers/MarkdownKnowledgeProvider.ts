@@ -28,6 +28,7 @@ export class MarkdownKnowledgeProvider implements KnowledgeProvider {
       .filter((e) => e.isFile() && e.name.endsWith(".md"))
       .map((e) => path.relative(dir, path.join(e.parentPath, e.name)))
       .filter((rel) => !rel.split(path.sep).some((part) => part.startsWith(".")))
+      .filter((rel) => path.basename(rel) !== "manifest.md" && !rel.split(path.sep).includes("manifest"))
       .sort();
   }
 

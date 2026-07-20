@@ -23,11 +23,13 @@ Every tool takes `repositoryPath` — the absolute path of the repo the agent is
 
 | Tool | Purpose |
 |------|---------|
-| `list_notes(repositoryPath)` | Every Markdown document for the project |
+| `list_notes(repositoryPath)` | Every canonical Markdown note; manifest paths are ignored |
 | `read_note(repositoryPath, note)` | Full content of one note (path from `list_notes`) |
 | `search_memory(repositoryPath, query)` | Case-insensitive text search; returns corpus note count, file, nearest heading, snippet, line |
 | `remember(repositoryPath, …event)` | Append an immutable update event to the Stash |
 | `pending_updates(repositoryPath)` | All unprocessed events for the project, oldest first |
+
+Search scans headings and prose. Rows made only of wiki links are navigation, so they are not returned as knowledge.
 
 `remember` accepts: `agent`, `type`, `summary` (required); `details`, `files`, `confidence` (0–1), `branch`, `tags` (optional). Use `failed_attempt`, `gotcha`, `knowledge_correction`, or `abstained` when a durable negative lesson matters; successful changes keep their normal domain type. The server stamps the timestamp and derives the filename from it, e.g. `2026-07-14T14-32-11-123Z.yaml`. Files are written with the exclusive flag — an existing event can never be overwritten.
 

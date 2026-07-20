@@ -42,6 +42,8 @@ export class LineSearchEngine implements SearchEngine {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (/^#{1,6}\s/.test(line)) heading = line.replace(/^#{1,6}\s+/, "").trim();
+      const prose = line.replace(/\[\[[^\]]+\]\]/g, "");
+      if (line.includes("[[") && !/[\p{L}\p{N}]/u.test(prose)) continue;
       const lc = line.toLowerCase();
       const score = words.filter((w) => lc.includes(w)).length;
       if (score > 0) {

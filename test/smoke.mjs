@@ -9,12 +9,18 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 const root = await fs.mkdtemp(path.join(os.tmpdir(), "memory-mcp-"));
 await fs.mkdir(path.join(root, "Knowledge/Kuku/payments"), { recursive: true });
+await fs.mkdir(path.join(root, "Knowledge/Kuku/manifest"), { recursive: true });
 await fs.mkdir(path.join(root, "Knowledge/MCP"), { recursive: true });
 await fs.writeFile(
   path.join(root, "Knowledge/Kuku/payments/iap.md"),
   "# IAP\n\n## StoreManager\n\nStoreManager handles all purchases.\n\n" +
     "## Coins\n\nCoins unlock premium reels and downloads.\nPremium subscription is separate.\n",
 );
+await fs.appendFile(
+  path.join(root, "Knowledge/Kuku/payments/iap.md"),
+  "\n[[network-errors|Network Errors]] · [[http-client-retry|Retry Requests]]\n",
+);
+await fs.writeFile(path.join(root, "Knowledge/Kuku/manifest/networking.md"), "# Navigation only\n");
 await fs.writeFile(path.join(root, "Knowledge/MCP/observability.md"), "# Observability\n");
 
 const client = new Client({ name: "smoke", version: "1.0.0" });
@@ -76,6 +82,11 @@ const stopwordy = JSON.parse(
 );
 assert.equal(stopwordy.results[0].heading, "Coins");
 assert.equal(stopwordy.results[0].score, 3, "stopwords must not count toward the score");
+
+const navigationOnly = JSON.parse(
+  await call("search_memory", { repositoryPath, query: "network errors retry" }),
+);
+assert.equal(navigationOnly.results.length, 0, "pure wiki-link rows must not appear as knowledge");
 
 // remember + pending_updates
 await call("remember", {

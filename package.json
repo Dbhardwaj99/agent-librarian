@@ -10,7 +10,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "gain": "npm run build && node dist/gain.js",
-    "test": "npm run build && node test/smoke.mjs && node test/gain-rotation.mjs && node test/dashboard.mjs"
+    "test": "npm run build && node test/knowledge-structure.mjs && node test/smoke.mjs && node test/gain-rotation.mjs && node test/dashboard.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
