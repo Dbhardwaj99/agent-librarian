@@ -19,7 +19,7 @@ Agents read knowledge through the tools below. They never edit it. When an agent
 
 ## Tools
 
-Every tool takes `repositoryPath` — the absolute path of the repo the agent is working in — and resolves it to a knowledge project internally. Every tool also accepts an optional `taskId`; reuse one ID across a task to connect searches, reads, writes, and outcomes in the log.
+Every tool takes `repositoryPath` — the absolute path of the repo or nested worktree the agent is using — and resolves the nearest known repository folder to a knowledge project. Root Duskara worktrees named `Quest For Duskara-*` are also recognized. Every tool also accepts an optional `taskId`; reuse one ID across a task to connect searches, reads, writes, and outcomes in the log.
 
 | Tool | Purpose |
 |------|---------|

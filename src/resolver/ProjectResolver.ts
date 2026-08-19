@@ -10,6 +10,8 @@ const REPO_TO_PROJECT: Record<string, string> = {
   "Memory": "MCP",
   "kukufm-ios": "Kuku",
   "Quest For Duskara": "Duskara",
+  "OpenFront": "OpenFront",
+  "OpenFrontIO": "OpenFront",
 };
 
 export class ProjectResolver {
@@ -20,8 +22,13 @@ export class ProjectResolver {
    * project name (e.g. "Kuku"). Throws with the known repos on failure.
    */
   resolve(repositoryPath: string): string {
-    const repoName = path.basename(path.resolve(repositoryPath));
-    const project = this.mapping[repoName];
+    const resolvedPath = path.resolve(repositoryPath);
+    const segments = resolvedPath.split(path.sep).reverse();
+    const repoName = segments.find((name) => this.mapping[name])
+      ?? segments.find((name) => name.startsWith("Quest For Duskara-"))
+      ?? path.basename(resolvedPath);
+    const project = this.mapping[repoName]
+      ?? (repoName.startsWith("Quest For Duskara-") ? this.mapping["Quest For Duskara"] : undefined);
     if (!project) {
       const known = Object.keys(this.mapping).join(", ");
       throw new Error(

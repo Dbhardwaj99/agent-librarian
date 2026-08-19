@@ -11,6 +11,8 @@ const root = await fs.mkdtemp(path.join(os.tmpdir(), "memory-mcp-"));
 await fs.mkdir(path.join(root, "Knowledge/Kuku/payments"), { recursive: true });
 await fs.mkdir(path.join(root, "Knowledge/Kuku/manifest"), { recursive: true });
 await fs.mkdir(path.join(root, "Knowledge/MCP"), { recursive: true });
+await fs.mkdir(path.join(root, "Knowledge/Duskara"), { recursive: true });
+await fs.mkdir(path.join(root, "Knowledge/OpenFront"), { recursive: true });
 await fs.writeFile(
   path.join(root, "Knowledge/Kuku/payments/iap.md"),
   "# IAP\n\n## StoreManager\n\nStoreManager handles all purchases.\n\n" +
@@ -22,6 +24,8 @@ await fs.appendFile(
 );
 await fs.writeFile(path.join(root, "Knowledge/Kuku/manifest/networking.md"), "# Navigation only\n");
 await fs.writeFile(path.join(root, "Knowledge/MCP/observability.md"), "# Observability\n");
+await fs.writeFile(path.join(root, "Knowledge/Duskara/overview.md"), "# Duskara\n");
+await fs.writeFile(path.join(root, "Knowledge/OpenFront/overview.md"), "# OpenFront\n");
 
 const client = new Client({ name: "smoke", version: "1.0.0" });
 await client.connect(
@@ -49,6 +53,15 @@ const memoryNotes = JSON.parse(await call("list_notes", {
 }));
 assert.equal(memoryNotes.project, "MCP");
 assert.deepEqual(memoryNotes.notes, ["observability.md"]);
+assert.equal(JSON.parse(await call("list_notes", {
+  repositoryPath: "/Users/divyansh/Documents/Quest For Duskara-QUE-10",
+})).project, "Duskara");
+assert.equal(JSON.parse(await call("list_notes", {
+  repositoryPath: "/Users/divyansh/Documents/Quest For Duskara/.claude/worktrees/grid-fix",
+})).project, "Duskara");
+assert.equal(JSON.parse(await call("list_notes", {
+  repositoryPath: "/Users/divyansh/Desktop/OpenFrontIO",
+})).project, "OpenFront");
 
 // read_note
 assert.match(await call("read_note", { repositoryPath, note: "payments/iap.md", taskId }), /StoreManager handles/);
