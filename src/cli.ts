@@ -427,11 +427,11 @@ async function librarian(flags: Flags): Promise<void> {
     .replaceAll("{{projects}}", projects)
     .replaceAll("{{date}}", today());
 
-  const model = settings.librarian.model;
+  const { model, args: extraArgs = [] } = settings.librarian;
   const sourceDirs = Object.values(settings.projects).flatMap((p) => p.paths ?? []);
   const [cmd, args] =
     agent === "codex"
-      ? ["codex", ["exec", "-C", vault, "-s", "workspace-write", ...(model ? ["-m", model] : []), prompt]]
+      ? ["codex", ["exec", "-C", vault, "-s", "workspace-write", ...(model ? ["-m", model] : []), ...extraArgs, prompt]]
       : [
           "claude",
           [
@@ -443,6 +443,7 @@ async function librarian(flags: Flags): Promise<void> {
             "Read Grep Glob Edit Write MultiEdit Bash(git:*)",
             ...sourceDirs.flatMap((d) => ["--add-dir", d]),
             ...(model ? ["--model", model] : []),
+            ...extraArgs,
           ],
         ];
   if (dryRun) {

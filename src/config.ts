@@ -18,7 +18,8 @@ export interface ProjectConfig {
 
 export interface VaultConfig {
   projects: Record<string, ProjectConfig>;
-  librarian: { agent: "codex" | "claude"; schedule: string; model?: string };
+  /** `model` and extra CLI `args` are passed to the agent, e.g. ["-c", "model_reasoning_effort=medium"]. */
+  librarian: { agent: "codex" | "claude"; schedule: string; model?: string; args?: string[] };
 }
 
 /**
