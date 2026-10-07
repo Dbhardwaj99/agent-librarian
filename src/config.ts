@@ -1,31 +1,85 @@
+import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+/** Package root: dist/config.js -> package folder. Ships skills, librarian prompt, templates. */
+export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/** The vault's own settings file, committed with the knowledge. */
+export const VAULT_CONFIG = "agent-librarian.json";
+
+export interface ProjectConfig {
+  /** Folder names that identify the project's repos. A trailing `*` matches a prefix. */
+  match: string[];
+  /** Absolute repo paths registered with `add`, so the Librarian knows where to audit source. */
+  paths?: string[];
+}
+
+export interface VaultConfig {
+  projects: Record<string, ProjectConfig>;
+  librarian: { agent: "codex" | "claude"; schedule: string; model?: string };
+}
+
 /**
- * Filesystem layout. Everything is derived from the Memory root, which
- * defaults to the parent of the MCP folder this server lives in
- * (Memory/MCP/dist/config.js -> Memory/). Override with MEMORY_ROOT.
+ * Filesystem layout. Everything hangs off the vault: a git repo holding
+ * Knowledge/ (canonical notes + Stash/) and agent-librarian.json.
  */
 export interface Config {
-  /** Root of canonical knowledge, e.g. Memory/Knowledge. Read-only. */
+  vault: string;
+  /** Root of canonical knowledge, e.g. <vault>/Knowledge. Read-only to agents. */
   knowledgeRoot: string;
-  /** Root of the event stash, e.g. Memory/Knowledge/Stash. Append-only. */
+  /** Root of the event stash, e.g. <vault>/Knowledge/Stash. Append-only. */
   stashRoot: string;
-  /** JSONL history of tool calls, e.g. Memory/MCP/logs/tool-calls.jsonl. */
+  /** JSONL history of tool calls. Gitignored. */
   logFile: string;
   /** Rotate the log once it reaches this many bytes. Override with LOG_MAX_BYTES. */
   logMaxBytes: number;
 }
 
+/** Per-user pointer to the vault: ~/.config/agent-librarian/config.json. */
+export const userConfigFile = () => path.join(os.homedir(), ".config", "agent-librarian", "config.json");
+
+export function findVault(env: NodeJS.ProcessEnv = process.env): string {
+  if (env.MEMORY_ROOT) return path.resolve(env.MEMORY_ROOT);
+  try {
+    const vault = JSON.parse(fs.readFileSync(userConfigFile(), "utf8")).vault;
+    if (typeof vault === "string") return vault;
+  } catch {
+    // fall through to the actionable error below
+  }
+  throw new Error("No vault configured. Run `agent-librarian init` (or set MEMORY_ROOT).");
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const memoryRoot =
-    env.MEMORY_ROOT ??
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-  const knowledgeRoot = env.KNOWLEDGE_ROOT ?? path.join(memoryRoot, "Knowledge");
-  // ponytail: Stash lives inside Knowledge/ on disk today; move it by setting STASH_ROOT.
+  const vault = findVault(env);
+  const knowledgeRoot = env.KNOWLEDGE_ROOT ?? path.join(vault, "Knowledge");
+  // ponytail: Stash lives inside Knowledge/ on disk; move it by setting STASH_ROOT.
   const stashRoot = env.STASH_ROOT ?? path.join(knowledgeRoot, "Stash");
-  const logFile =
-    env.LOG_FILE ?? path.join(memoryRoot, "MCP", "logs", "tool-calls.jsonl");
+  const logFile = env.LOG_FILE ?? path.join(vault, ".logs", "tool-calls.jsonl");
   const logMaxBytes = Number(env.LOG_MAX_BYTES) || 5_000_000;
-  return { knowledgeRoot, stashRoot, logFile, logMaxBytes };
+  return { vault, knowledgeRoot, stashRoot, logFile, logMaxBytes };
+}
+
+const DEFAULT_VAULT_CONFIG: VaultConfig = {
+  projects: {},
+  librarian: { agent: "codex", schedule: "weekdays 11:30" },
+};
+
+/** Read <vault>/agent-librarian.json. Re-read on every call so `add` takes effect without a restart. */
+export function readVaultConfig(vault: string): VaultConfig {
+  let raw: Partial<VaultConfig> = {};
+  try {
+    raw = JSON.parse(fs.readFileSync(path.join(vault, VAULT_CONFIG), "utf8"));
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+  }
+  return {
+    projects: raw.projects ?? {},
+    librarian: { ...DEFAULT_VAULT_CONFIG.librarian, ...raw.librarian },
+  };
+}
+
+export function writeVaultConfig(vault: string, config: VaultConfig): void {
+  fs.writeFileSync(path.join(vault, VAULT_CONFIG), JSON.stringify(config, null, 2) + "\n");
 }

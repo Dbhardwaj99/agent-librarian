@@ -1,40 +1,34 @@
 import * as path from "node:path";
+import type { ProjectConfig } from "../config.js";
+
+type Projects = Record<string, Pick<ProjectConfig, "match">>;
+
+const matches = (pattern: string, name: string) =>
+  pattern.endsWith("*") ? name.startsWith(pattern.slice(0, -1)) : name === pattern;
 
 /**
- * Maps a repository root path to its knowledge project name.
- *
- * This is the ONLY place project-specific mapping lives. To support a new
- * repository, add one entry here (and create its Knowledge/<name> folder).
+ * Maps a repository path to its knowledge project using the vault's
+ * `projects` matchers. The innermost matching folder wins, so worktrees
+ * nested inside a repo (repo/.claude/worktrees/x) resolve to that repo.
  */
-const REPO_TO_PROJECT: Record<string, string> = {
-  "Memory": "MCP",
-  "kukufm-ios": "Kuku",
-  "Quest For Duskara": "Duskara",
-  "OpenFront": "OpenFront",
-  "OpenFrontIO": "OpenFront",
-};
-
 export class ProjectResolver {
-  constructor(private readonly mapping: Record<string, string> = REPO_TO_PROJECT) {}
+  private readonly projects: () => Projects;
 
-  /**
-   * Resolve a repository path (e.g. /Users/x/Documents/kukufm-ios) to a
-   * project name (e.g. "Kuku"). Throws with the known repos on failure.
-   */
+  constructor(projects: Projects | (() => Projects)) {
+    this.projects = typeof projects === "function" ? projects : () => projects;
+  }
+
+  /** Resolve e.g. /Users/x/code/kukufm-ios to "Kuku". Throws with the known repos on failure. */
   resolve(repositoryPath: string): string {
-    const resolvedPath = path.resolve(repositoryPath);
-    const segments = resolvedPath.split(path.sep).reverse();
-    const repoName = segments.find((name) => this.mapping[name])
-      ?? segments.find((name) => name.startsWith("Quest For Duskara-"))
-      ?? path.basename(resolvedPath);
-    const project = this.mapping[repoName]
-      ?? (repoName.startsWith("Quest For Duskara-") ? this.mapping["Quest For Duskara"] : undefined);
-    if (!project) {
-      const known = Object.keys(this.mapping).join(", ");
-      throw new Error(
-        `Unknown repository "${repoName}". Known repositories: ${known}`,
-      );
+    const projects = Object.entries(this.projects());
+    const segments = path.resolve(repositoryPath).split(path.sep).filter(Boolean).reverse();
+    for (const segment of segments) {
+      const hit = projects.find(([, p]) => p.match.some((pattern) => matches(pattern, segment)));
+      if (hit) return hit[0];
     }
-    return project;
+    const known = projects.flatMap(([, p]) => p.match).join(", ") || "none";
+    throw new Error(
+      `Unknown repository "${path.basename(repositoryPath)}". Register it with \`agent-librarian add <repo>\`. Known repositories: ${known}`,
+    );
   }
 }

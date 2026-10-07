@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { logged, type RegisterTool } from "./deps.js";
+import { readNote } from "../core.js";
 
-export const registerReadNote: RegisterTool = (server, { resolver, registry, logger }) => {
+export const registerReadNote: RegisterTool = (server, deps) => {
   server.registerTool(
     "read_note",
     {
@@ -15,9 +16,8 @@ export const registerReadNote: RegisterTool = (server, { resolver, registry, log
       },
     },
     async ({ repositoryPath, note, taskId }) =>
-      logged(logger, "read_note", { repositoryPath, note, taskId }, async () => {
-        const project = resolver.resolve(repositoryPath);
-        const content = await registry.get("knowledge").readNote(project, note);
+      logged(deps.logger, "read_note", { repositoryPath, note, taskId }, async () => {
+        const { content } = await readNote(deps, repositoryPath, note);
         return {
           result: { content: [{ type: "text" as const, text: content }] },
           logExtra: { characters: content.length },

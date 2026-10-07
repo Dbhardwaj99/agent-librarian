@@ -1,115 +1,105 @@
-# Local Memory MCP
+# agent-librarian
 
-A local, offline MCP server that gives AI coding agents (Claude Code, Codex CLI, Cursor, …) read access to canonical project knowledge and an append-only way to propose updates. No LLM logic, no database, no network — just a thin, stateless interface over the `Memory/` directory.
+Persistent, **curated** project memory for coding agents (Claude Code, Codex, Cursor, or anything with a shell).
 
-## How it works
+Agents search the memory before exploring code, and record what they learn as small events. A scheduled **Librarian** agent audits each event against the real source and folds it into a tidy Markdown wiki. Memory therefore gets more accurate over time instead of piling up contradictions.
+
+Everything lives in a private git repo you own (the **vault**). The engine in this repo holds none of your data.
 
 ```text
-Memory/
-├── Knowledge/            ← canonical knowledge (READ-ONLY to this server)
-│   ├── Kuku/             ← Markdown docs for kukufm-ios
-│   ├── Duskara/          ← Markdown docs for Quest For Duskara
-│   └── Stash/            ← proposed updates (APPEND-ONLY)
-│       ├── Kuku/         ←   one immutable YAML file per event
-│       └── Duskara/
-└── MCP/                  ← this server
+agents ──search/read──▶ vault/Knowledge/<Project>/*.md   (canonical, Librarian-edited)
+agents ──remember────▶ vault/Knowledge/Stash/<Project>/*.yaml   (append-only events)
+Librarian (scheduled) ── audits source ──▶ edits Knowledge, removes consumed events, commits, pushes
 ```
 
-Agents read knowledge through the tools below. They never edit it. When an agent learns something, it calls `remember`, which writes an immutable YAML event into the Stash. A separate Librarian process (out of scope here) folds events into canonical knowledge later.
+## Install
 
-## Tools
+You need Node ≥ 20.12 and git. If you want agents wired up automatically, also install Claude Code, Codex, or Cursor.
 
-Every tool takes `repositoryPath` — the absolute path of the repo or nested worktree the agent is using — and resolves the nearest known repository folder to a knowledge project. Root Duskara worktrees named `Quest For Duskara-*` are also recognized. Every tool also accepts an optional `taskId`; reuse one ID across a task to connect searches, reads, writes, and outcomes in the log.
+```bash
+git clone https://github.com/Dbhardwaj99/agent-librarian
+cd agent-librarian && npm install && npm link    # builds and puts `agent-librarian` on PATH
+# or, without cloning:  npm i -g github:Dbhardwaj99/agent-librarian
+```
+
+## Set up (once)
+
+```bash
+agent-librarian init ~/agent-memory      # create a private vault, wire every agent CLI found, schedule the Librarian
+cd ~/code/my-app && agent-librarian add  # register each repo you want remembered
+```
+
+`init` does three things:
+
+- Creates `~/agent-memory`, a git repo.
+- Registers the MCP server and installs `skills/agent-librarian/SKILL.md` for each agent it finds: Claude Code, Codex, and Cursor (MCP only).
+- Schedules the Librarian for weekdays at 11:30, using launchd on macOS or cron on Linux.
+
+To back up your vault and sync it across machines, give it a **private** remote:
+
+```bash
+cd ~/agent-memory && git remote add origin git@github.com:you/agent-memory.git && git push -u origin main
+```
+
+**New machine or teammate:** clone and link the engine, then run `agent-librarian init git@github.com:you/agent-memory.git`.
+
+**Skill only**, for agents the installer doesn't know: `npx skills add Dbhardwaj99/agent-librarian --skill agent-librarian`.
+
+## Daily use
+
+Nothing changes in how you work. The skill teaches agents to `search_memory` before grepping and to `remember` durable findings. The Librarian runs on schedule and writes `Knowledge/librarian/daily-brief.md`. Run `agent-librarian doctor` whenever something looks off; it also flags a stash backlog that hasn't been processed for over a week.
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `init [dir \| git-url]` | Create, clone, or adopt a vault; then `install` + `schedule` (`--no-install`, `--no-schedule`) |
+| `add [repo] [--project N] [--match "prefix-*"]` | Register a repo; matches its folder name anywhere in a path, so worktrees resolve too |
+| `install [--claude] [--codex] [--cursor] [--dry-run]` | Register the MCP server + skill |
+| `schedule [--at "weekdays 11:30"] [--sync] [--remove]` | Timer for `librarian` (or `sync`) |
+| `search` / `read` / `list` / `pending` / `remember` | Same as the MCP tools, from a shell; project comes from the current directory |
+| `librarian [--agent codex\|claude] [--dry-run]` | Snapshot manual edits, run the agent headless, run `check`, commit, push |
+| `sync` | Commit new stash events, `pull --rebase`, push — how teammates' events reach the Librarian |
+| `check` | Knowledge structure rules: ≤300 words per note, ≤8 hub children, no unresolved `[[links]]` |
+| `doctor` | Vault, agents, skill freshness, schedule, stash backlog age |
+| `gain` / `dashboard` | Tool-call telemetry from `<vault>/.logs/tool-calls.jsonl` |
+
+## MCP tools
+
+Every tool takes `repositoryPath` (the repo being worked on) and an optional `taskId` that ties related calls together in the log.
 
 | Tool | Purpose |
-|------|---------|
-| `list_notes(repositoryPath)` | Every canonical Markdown note; manifest paths are ignored |
-| `read_note(repositoryPath, note)` | Full content of one note (path from `list_notes`) |
-| `search_memory(repositoryPath, query)` | Ranked section search; returns corpus note count, file, nearest heading, strongest snippet, line, match count, and nearby context |
-| `remember(repositoryPath, …event)` | Append an immutable update event to the Stash |
-| `pending_updates(repositoryPath)` | All unprocessed events for the project, oldest first |
+|---|---|
+| `list_notes` | Every canonical note for the project |
+| `read_note` | One note's full content |
+| `search_memory` | Ranked section search: file, heading, strongest snippet, nearby context |
+| `remember` | Append an immutable event (`type`, `summary`, optional `details`, `files`, `tags`, `confidence`, `branch`). Unknown repos go to `Stash/Unfiled` instead of being dropped. |
+| `pending_updates` | Unprocessed events, oldest first |
 
-Search scans headings and prose with exact tokens, corpus-aware term weighting, and section-level context. Rows made only of wiki links are navigation, so they are not returned as knowledge.
-
-`remember` accepts: `agent`, `type`, `summary` (required); `details`, `files`, `confidence` (0–1), `branch`, `tags` (optional). Use `failed_attempt`, `gotcha`, `knowledge_correction`, or `abstained` when a durable negative lesson matters; successful changes keep their normal domain type. The server stamps the timestamp and derives the filename from it, e.g. `2026-07-14T14-32-11-123Z.yaml`. Files are written with the exclusive flag — an existing event can never be overwritten.
-
-If `repositoryPath` doesn't resolve to a known project, `remember` never throws the event away: it falls back to `Knowledge/Stash/Unfiled/`, keeping the original `repositoryPath` on the event so it can be re-filed by hand later (response includes `unfiled: true`). Every other tool still errors cleanly on an unknown repo — there's nothing to list or read for a project that isn't registered.
-
-If `type` is `"knowledge_correction"` and `tags` are given, the response includes `possiblyAffected`: other notes matching those tags that weren't listed in `files`. A correction is only useful if it reaches every note repeating the now-wrong fact — this is a nudge toward those notes at correction time instead of relying on a later pass to remember to look for them.
-
-## Setup
-
-```bash
-cd Memory/MCP
-npm install
-npm run build
-```
-
-Register with Claude Code:
-
-```bash
-claude mcp add -s user local-memory -- node /Users/aaa/Documents/Memory/MCP/dist/server.js
-```
-
-Or in any MCP client config:
-
-```json
-{
-  "mcpServers": {
-    "local-memory": {
-      "command": "node",
-      "args": ["/Users/aaa/Documents/Memory/MCP/dist/server.js"]
-    }
-  }
-}
-```
-
-Environment overrides (all optional): `MEMORY_ROOT` (defaults to the `Memory/` folder this server lives in), `KNOWLEDGE_ROOT`, `STASH_ROOT`, `LOG_FILE`.
-
-## Call log
-
-Every tool call is appended to `Memory/MCP/logs/tool-calls.jsonl`, one JSON line per call with `timestamp`, `tool`, and `params`. New entries include `ok: true` on success or `ok: false` plus `error` on failure, and `durationMs` either way. Searches also log corpus note count, total/returned result counts, and returned-file diversity. When supplied, `taskId` appears on every tool's log entry. `remember` logs its summary and structured metadata but not the long `details` body, which already lives in the Stash. Logging is best-effort and never fails a tool call. Inspect with `tail logs/tool-calls.jsonl`, open `logs/dashboard.html`, or run `npm run gain` to audit the live and rotated logs together.
-
-## Testing
-
-```bash
-npm test
-```
-
-Builds and runs `test/smoke.mjs`, which spawns the real server against a throwaway fixture and exercises every tool, including path-traversal rejection and unknown-repo errors.
-
-## Architecture
+## Vault layout
 
 ```text
-src/
-├── server.ts                 composition root — all wiring, no logic
-├── config.ts                 filesystem layout (env-overridable)
-├── types/                    shared types
-├── resolver/
-│   └── ProjectResolver.ts    repo path → project name (the ONLY project-specific code)
-├── providers/
-│   ├── KnowledgeProvider.ts  interface every knowledge source implements
-│   ├── MarkdownKnowledgeProvider.ts  read-only Markdown over Knowledge/
-│   └── ProviderRegistry.ts   holds all providers; tools iterate it
-├── memory/
-│   ├── SearchEngine.ts       pluggable search (LineSearchEngine today)
-│   └── EventStore.ts         append-only YAML events under Stash/
-└── tools/                    one file per MCP tool, deps injected
+agent-memory/
+  agent-librarian.json        # projects → repo folder matchers + paths; librarian agent/schedule/model
+  Knowledge/
+    README.md
+    <Project>/<Project>.md    # one hub per repo, Librarian-maintained
+    Stash/<Project>/*.yaml    # pending events
+    librarian/daily-brief.md
+    LIBRARIAN.md              # optional: override the packaged writing rules
+  .logs/                      # telemetry + scheduler logs (gitignored)
 ```
 
-Design rules the code follows:
+## Why not agents writing memory directly?
 
-- **Stateless.** Every tool call reads the filesystem fresh. No cache, no daemon state.
-- **Canonical knowledge is read-only.** The provider only ever opens files for reading; the only write path in the whole codebase is `EventStore.append`, which targets the Stash and uses `wx` (fail-if-exists).
-- **Repositories are never touched.** The server only knows about `Memory/`.
+That is what [Agent Memory Repo](https://github.com/AgentMemoryRepo/agentmemoryrepo) does: simple, zero-dependency, and great for personal preferences. agent-librarian trades a little setup for three things:
 
-## Extending
+- **Audited knowledge.** Every claim is checked against source before it becomes canonical.
+- **Conflict-free concurrent writers.** Each event is its own file, so parallel agents and teammates never merge-conflict.
+- **A wiki that stays navigable.** Hubs, size limits, and link checks keep it organized.
 
-- **New repository** → add one entry to the map in `resolver/ProjectResolver.ts` and create `Knowledge/<Name>/`.
-- **New knowledge provider** (Personal/, Research/, Snippets/, …) → implement `KnowledgeProvider`, register it in `server.ts`. `list_notes` and `search_memory` already fan out across all registered providers.
-- **Different search** → implement `SearchEngine`, swap it in `server.ts`.
-- **New tool** → add a file in `src/tools/` exporting a `RegisterTool`, add it to the list in `server.ts`.
+## Development
 
-## Note on the Stash location
-
-The original design doc places the Stash at `Memory/Stash/`, but on disk it lives at `Memory/Knowledge/Stash/`. The server follows the disk. If you move it, set `STASH_ROOT` — no code change needed.
+```bash
+npm test   # build + structure check, MCP smoke test, CLI journey (throwaway HOME), telemetry
+```

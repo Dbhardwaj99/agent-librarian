@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { json, logged, type RegisterTool } from "./deps.js";
+import { pendingUpdates } from "../core.js";
 
-export const registerPendingUpdates: RegisterTool = (server, { resolver, events, logger }) => {
+export const registerPendingUpdates: RegisterTool = (server, deps) => {
   server.registerTool(
     "pending_updates",
     {
@@ -14,12 +15,11 @@ export const registerPendingUpdates: RegisterTool = (server, { resolver, events,
       },
     },
     async ({ repositoryPath, taskId }) =>
-      logged(logger, "pending_updates", { repositoryPath, taskId }, async () => {
-        const project = resolver.resolve(repositoryPath);
-        const pending = await events.list(project);
+      logged(deps.logger, "pending_updates", { repositoryPath, taskId }, async () => {
+        const result = await pendingUpdates(deps, repositoryPath);
         return {
-          result: json({ project, count: pending.length, pending }),
-          logExtra: { total: pending.length },
+          result: json(result),
+          logExtra: { total: result.count },
         };
       }),
   );

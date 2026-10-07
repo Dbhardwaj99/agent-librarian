@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Read-only audit of the live and rotated tool-call logs. Run with `npm run gain`.
+// Read-only audit of the live and rotated tool-call logs. Run with `agent-librarian gain`.
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { loadConfig } from "./config.js";
@@ -37,7 +37,7 @@ const percentile = (xs: number[], p: number) => {
   return sorted[Math.floor((sorted.length - 1) * p)];
 };
 
-const file = loadConfig().logFile;
+const file = process.env.LOG_FILE ?? loadConfig().logFile;
 const dir = path.dirname(file);
 const base = path.basename(file);
 const files = (await fs.readdir(dir).catch(() => []))

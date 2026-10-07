@@ -1,16 +1,27 @@
 {
-  "name": "local-memory",
-  "version": "1.0.0",
-  "description": "Local MCP server exposing persistent project knowledge from the Memory directory",
+  "name": "agent-librarian",
+  "version": "0.1.0",
+  "description": "Curated, persistent project memory for coding agents: an MCP server + CLI over a private git vault, kept tidy by a scheduled Librarian.",
   "type": "module",
+  "license": "MIT",
   "bin": {
-    "local-memory": "dist/server.js"
+    "agent-librarian": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "librarian",
+    "templates",
+    "dashboard"
+  ],
+  "engines": {
+    "node": ">=20.12"
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "tsc",
     "start": "node dist/server.js",
-    "gain": "npm run build && node dist/gain.js",
-    "test": "npm run build && node test/knowledge-structure.mjs && node test/smoke.mjs && node test/gain-rotation.mjs && node test/dashboard.mjs"
+    "test": "npm run build && node test/check.mjs && node test/smoke.mjs && node test/cli.mjs && node test/gain-rotation.mjs && node test/dashboard.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

@@ -1,0 +1,7 @@
+{
+  "projects": {},
+  "librarian": {
+    "agent": "codex",
+    "schedule": "weekdays 11:30"
+  }
+}

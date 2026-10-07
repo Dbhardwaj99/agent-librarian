@@ -1,13 +1,8 @@
 import { z } from "zod";
 import { json, logged, type RegisterTool } from "./deps.js";
+import { remember } from "../core.js";
 
-// Bucket for events whose repositoryPath doesn't resolve to a known project (e.g. a
-// repo not yet added to ProjectResolver, or a stray/mistaken path). Never dropping the
-// event beats a silent "Unknown repository" throw — the fallback keeps the original
-// repositoryPath on the event so a human can re-file it later.
-const UNFILED_PROJECT = "Unfiled";
-
-export const registerRemember: RegisterTool = (server, { resolver, registry, events, logger }) => {
+export const registerRemember: RegisterTool = (server, deps) => {
   server.registerTool(
     "remember",
     {
@@ -29,35 +24,8 @@ export const registerRemember: RegisterTool = (server, { resolver, registry, eve
     },
     async ({ repositoryPath, taskId, ...event }) => {
       const { details: _details, ...logEvent } = event;
-      return logged(logger, "remember", { repositoryPath, taskId, ...logEvent }, async () => {
-        let project: string;
-        let unfiled = false;
-        try {
-          project = resolver.resolve(repositoryPath);
-        } catch {
-          project = UNFILED_PROJECT;
-          unfiled = true;
-        }
-        const timestamp = new Date().toISOString();
-        const storedEvent = unfiled ? { timestamp, repositoryPath, ...event } : { timestamp, ...event };
-        const file = await events.append(project, storedEvent);
-
-        // A correction is only useful if it reaches every note that repeats the
-        // now-wrong fact. Nudge toward those notes instead of relying on a later
-        // pass to remember to go looking for them.
-        let possiblyAffected: { file: string; heading: string; snippet: string }[] | undefined;
-        if (!unfiled && event.type === "knowledge_correction" && event.tags?.length) {
-          const already = new Set(event.files ?? []);
-          possiblyAffected = (
-            await Promise.all(registry.all().map((p) => p.search(project, event.tags!.join(" "))))
-          )
-            .flat()
-            .filter((r) => !already.has(r.file))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 5)
-            .map(({ file, heading, snippet }) => ({ file, heading, snippet }));
-        }
-
+      return logged(deps.logger, "remember", { repositoryPath, taskId, ...logEvent }, async () => {
+        const { project, file, unfiled, possiblyAffected } = await remember(deps, repositoryPath, event);
         return {
           result: json({ project, file, recorded: true, unfiled, possiblyAffected }),
           logExtra: { project, unfiled, possiblyAffected: possiblyAffected?.length },

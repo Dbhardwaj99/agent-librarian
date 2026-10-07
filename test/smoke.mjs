@@ -26,6 +26,17 @@ await fs.writeFile(path.join(root, "Knowledge/Kuku/manifest/networking.md"), "# 
 await fs.writeFile(path.join(root, "Knowledge/MCP/observability.md"), "# Observability\n");
 await fs.writeFile(path.join(root, "Knowledge/Duskara/overview.md"), "# Duskara\n");
 await fs.writeFile(path.join(root, "Knowledge/OpenFront/overview.md"), "# OpenFront\n");
+await fs.writeFile(
+  path.join(root, "agent-librarian.json"),
+  JSON.stringify({
+    projects: {
+      Kuku: { match: ["kukufm-ios", "kukufm-ios-*"] },
+      MCP: { match: ["Memory"] },
+      Duskara: { match: ["Quest For Duskara", "Quest For Duskara-*"] },
+      OpenFront: { match: ["OpenFront", "OpenFrontIO"] },
+    },
+  }),
+);
 
 const client = new Client({ name: "smoke", version: "1.0.0" });
 await client.connect(
@@ -62,6 +73,9 @@ assert.equal(JSON.parse(await call("list_notes", {
 assert.equal(JSON.parse(await call("list_notes", {
   repositoryPath: "/Users/divyansh/Desktop/OpenFrontIO",
 })).project, "OpenFront");
+assert.equal(JSON.parse(await call("list_notes", {
+  repositoryPath: "/Users/divyansh/Desktop/kukufm-ios-fd/kukufm",
+})).project, "Kuku", "a trailing * matches sibling checkouts like kukufm-ios-fd");
 
 // read_note
 assert.match(await call("read_note", { repositoryPath, note: "payments/iap.md", taskId }), /StoreManager handles/);
@@ -164,7 +178,7 @@ assert.match(strayFile, /repositoryPath: \/tmp\/not-a-repo/);
 
 // call log recorded every successful call with params and timestamp, and records
 // the outcome (ok: true/false) rather than just the attempted call
-const log = (await fs.readFile(path.join(root, "MCP/logs/tool-calls.jsonl"), "utf8"))
+const log = (await fs.readFile(path.join(root, ".logs/tool-calls.jsonl"), "utf8"))
   .trim().split("\n").map(JSON.parse);
 assert.ok(log.length >= 5, `expected >=5 log lines, got ${log.length}`);
 assert.match(log[0].timestamp, /^\d{4}-\d{2}-\d{2}T/);

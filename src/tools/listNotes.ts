@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { json, logged, type RegisterTool } from "./deps.js";
+import { listNotes } from "../core.js";
 
-export const registerListNotes: RegisterTool = (server, { resolver, registry, logger }) => {
+export const registerListNotes: RegisterTool = (server, deps) => {
   server.registerTool(
     "list_notes",
     {
@@ -14,11 +15,8 @@ export const registerListNotes: RegisterTool = (server, { resolver, registry, lo
       },
     },
     async ({ repositoryPath, taskId }) =>
-      logged(logger, "list_notes", { repositoryPath, taskId }, async () => {
-        const project = resolver.resolve(repositoryPath);
-        const notes = (
-          await Promise.all(registry.all().map((p) => p.listNotes(project)))
-        ).flat();
+      logged(deps.logger, "list_notes", { repositoryPath, taskId }, async () => {
+        const { project, notes } = await listNotes(deps, repositoryPath);
         return { result: json({ project, notes }), logExtra: { total: notes.length } };
       }),
   );

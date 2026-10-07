@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { json, logged, type RegisterTool } from "./deps.js";
+import { searchMemory } from "../core.js";
 
 const MAX_RESULTS = 24;
 
-export const registerSearchMemory: RegisterTool = (server, { resolver, registry, logger }) => {
+export const registerSearchMemory: RegisterTool = (server, deps) => {
   server.registerTool(
     "search_memory",
     {
@@ -17,17 +18,8 @@ export const registerSearchMemory: RegisterTool = (server, { resolver, registry,
       },
     },
     async ({ repositoryPath, query, taskId }) =>
-      logged(logger, "search_memory", { repositoryPath, query, taskId }, async () => {
-        const project = resolver.resolve(repositoryPath);
-        const providers = registry.all();
-        const [noteLists, resultLists] = await Promise.all([
-          Promise.all(providers.map((p) => p.listNotes(project))),
-          Promise.all(providers.map((p) => p.search(project, query))),
-        ]);
-        const noteCount = noteLists.flat().length;
-        const results = resultLists
-          .flat()
-          .sort((a, b) => b.rank - a.rank || b.score - a.score); // relevance, then query coverage
+      logged(deps.logger, "search_memory", { repositoryPath, query, taskId }, async () => {
+        const { project, noteCount, results } = await searchMemory(deps, repositoryPath, query);
         // total:0 is the high-signal case (an agent expected a memory that was never
         // written); logExtra records it either way. Query `gain` surfaces these.
         return {
