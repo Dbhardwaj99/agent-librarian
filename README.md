@@ -19,8 +19,9 @@ You need Node ≥ 20.12 and git. If you want agents wired up automatically, also
 ```bash
 git clone https://github.com/Dbhardwaj99/agent-librarian
 cd agent-librarian && npm install && npm link    # builds and puts `agent-librarian` on PATH
-# or, without cloning:  npm i -g github:Dbhardwaj99/agent-librarian
 ```
+
+(`npm i -g github:…` doesn't work: npm skips the TypeScript build for global git installs. Clone instead until the package is on npm.)
 
 ## Set up (once)
 
