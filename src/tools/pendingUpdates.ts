@@ -7,6 +7,7 @@ export const registerPendingUpdates: RegisterTool = (server, deps) => {
     "pending_updates",
     {
       title: "Pending updates",
+      annotations: { readOnlyHint: true, openWorldHint: false },
       description:
         "List every pending (not yet processed) update event for the project, oldest first.",
       inputSchema: {

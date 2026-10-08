@@ -18,7 +18,7 @@ import {
 import { createDeps, listNotes, pendingUpdates, readNote, remember, searchMemory } from "./core.js";
 import { logged } from "./tools/deps.js";
 
-const HELP = `agent-librarian — curated, persistent project memory for coding agents
+const HELP = `librarian — curated, persistent project memory for coding agents
 
 Setup
   init [dir | git-url] [--dir d]   Create (or clone, or adopt) a vault, wire agents, schedule the Librarian
@@ -39,19 +39,19 @@ Librarian
   librarian [--agent codex|claude] [--dry-run]   Fold pending events into knowledge, check, commit, push
   sync                                           Commit new stash events, pull --rebase, push
   check                                          Validate knowledge structure
-  gain / dashboard                               Tool-call telemetry
+  gain                                           Tool-call telemetry
 `;
 
 const home = os.homedir();
 const serverPath = path.join(packageRoot, "dist", "server.js");
 const cliPath = path.join(packageRoot, "dist", "cli.js");
-const skillSource = path.join(packageRoot, "skills", "agent-librarian", "SKILL.md");
-const SERVER_NAME = "agent-librarian";
+const skillSource = path.join(packageRoot, "skills", "librarian", "SKILL.md");
+const SERVER_NAME = "librarian";
 
 const print = (line = "") => console.log(line);
 const printJson = (value: unknown) => console.log(JSON.stringify(value, null, 2));
 function fail(message: string): never {
-  console.error(`agent-librarian: ${message}`);
+  console.error(`librarian: ${message}`);
   process.exit(1);
 }
 
@@ -136,7 +136,7 @@ function init(target: string | undefined, flags: Flags): void {
       // npm never ships a file named .gitignore, so the template stores it without the dot.
       fs.renameSync(path.join(vault, "gitignore"), path.join(vault, ".gitignore"));
       git(vault, "init", "-q", "-b", "main");
-      tryCommit(vault, "Create agent-librarian vault", ".");
+      tryCommit(vault, "Create librarian vault", ".");
       print(`Created vault ${vault}`);
     }
   }
@@ -146,7 +146,7 @@ function init(target: string | undefined, flags: Flags): void {
   if (!flags["no-install"]) install(flags);
   if (!flags["no-schedule"]) schedule(flags);
   print();
-  print("Next: in each repo you want remembered, run `agent-librarian add`.");
+  print("Next: in each repo you want remembered, run `librarian add`.");
   if (!isUrl && !hasRemote(vault)) {
     print(`Back up the vault: cd ${JSON.stringify(vault)} && git remote add origin <private repo> && git push -u origin main`);
   }
@@ -214,7 +214,7 @@ function install(flags: Flags): void {
   const dryRun = !!flags["dry-run"];
   const agents = detectAgents(flags);
   if (!agents.length) {
-    print("No Claude Code, Codex, or Cursor install found. Agents can still use the shell commands in skills/agent-librarian/SKILL.md.");
+    print("No Claude Code, Codex, or Cursor install found. Agents can still use the shell commands in skills/librarian/SKILL.md.");
     return;
   }
   for (const agent of agents) {
@@ -269,7 +269,7 @@ function schedule(flags: Flags): void {
   const dryRun = !!flags["dry-run"];
 
   if (process.platform === "darwin") {
-    const label = `com.agent-librarian.${job}`;
+    const label = `com.librarian.${job}`;
     const plist = path.join(home, "Library", "LaunchAgents", `${label}.plist`);
     const domain = `gui/${os.userInfo().uid}`;
     if (flags.remove) {
@@ -304,7 +304,7 @@ function schedule(flags: Flags): void {
     const r = run("launchctl", ["bootstrap", domain, plist]);
     print(r.ok ? `✓ ${job} scheduled ${at} (${plist})` : `✗ launchctl bootstrap failed: ${r.err}`);
   } else {
-    const marker = `# agent-librarian-${job}`;
+    const marker = `# librarian-${job}`;
     const line = `${Number(minute)} ${Number(hour)} * * ${days === "weekdays" ? "1-5" : "*"} PATH=${sh(process.env.PATH ?? "")} ${sh(process.execPath)} ${sh(cliPath)} ${job} >> ${sh(log)} 2>&1 ${marker}`;
     const current = run("crontab", ["-l"]).out.split("\n").filter((l) => l && !l.includes(marker));
     const next = [...current, ...(flags.remove ? [] : [line])].join("\n") + "\n";
@@ -334,7 +334,7 @@ async function memoryCommand(command: string, positionals: string[], flags: Flag
       return printJson(result);
     }
     case "read": {
-      const note = positionals[0] ?? fail("usage: agent-librarian read <note>");
+      const note = positionals[0] ?? fail("usage: librarian read <note>");
       const { content } = await logged(deps.logger, "read_note", { ...base, note }, async () => {
         const r = await readNote(deps, repositoryPath, note);
         return { result: r, logExtra: { characters: r.content.length } };
@@ -342,7 +342,7 @@ async function memoryCommand(command: string, positionals: string[], flags: Flag
       return print(content);
     }
     case "search": {
-      const query = positionals.join(" ") || fail("usage: agent-librarian search <query>");
+      const query = positionals.join(" ") || fail("usage: librarian search <query>");
       const result = await logged(deps.logger, "search_memory", { ...base, query }, async () => {
         const r = await searchMemory(deps, repositoryPath, query);
         const results = r.results.slice(0, 24);
@@ -513,10 +513,10 @@ async function doctor(): Promise<void> {
   }
 
   if (process.platform === "darwin") {
-    const label = `gui/${os.userInfo().uid}/com.agent-librarian.librarian`;
+    const label = `gui/${os.userInfo().uid}/com.librarian.librarian`;
     rows.push([run("launchctl", ["print", label]).ok || "warn", `Librarian scheduled (${settings.librarian.schedule}, ${settings.librarian.agent})`]);
   } else {
-    rows.push([run("crontab", ["-l"]).out.includes("# agent-librarian-librarian") || "warn", "Librarian scheduled (cron)"]);
+    rows.push([run("crontab", ["-l"]).out.includes("# librarian-librarian") || "warn", "Librarian scheduled (cron)"]);
   }
 
   const events = stashEvents(config.stashRoot);
@@ -589,15 +589,8 @@ async function main(): Promise<void> {
       await import("./gain.js");
       return;
     }
-    case "dashboard": {
-      const { logFile } = loadConfig();
-      const dest = path.join(path.dirname(logFile), "dashboard.html");
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.copyFileSync(path.join(packageRoot, "dashboard", "dashboard.html"), dest);
-      return print(`Dashboard ready: cd ${JSON.stringify(path.dirname(dest))} && python3 -m http.server 8765, then open http://localhost:8765/dashboard.html`);
-    }
     default:
-      fail(`unknown command "${command}". Run \`agent-librarian help\`.`);
+      fail(`unknown command "${command}". Run \`librarian help\`.`);
   }
 }
 

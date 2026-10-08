@@ -7,6 +7,7 @@ export const registerRemember: RegisterTool = (server, deps) => {
     "remember",
     {
       title: "Remember",
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       description:
         "Record a proposed knowledge update as an immutable event. Never modifies canonical knowledge; the Librarian processes events later.",
       inputSchema: {

@@ -9,6 +9,7 @@ export const registerSearchMemory: RegisterTool = (server, deps) => {
     "search_memory",
     {
       title: "Search memory",
+      annotations: { readOnlyHint: true, openWorldHint: false },
       description:
         "Search every Markdown knowledge document of the project. Returns ranked section hits with filename, heading, strongest snippet, and nearby context.",
       inputSchema: {

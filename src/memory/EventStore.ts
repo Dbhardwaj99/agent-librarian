@@ -1,11 +1,12 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { randomUUID } from "node:crypto";
 import YAML from "yaml";
 import type { StoredEvent, UpdateEvent } from "../types/index.js";
 
 /**
  * Append-only store of proposed-update events under Stash/<Project>/.
- * One YAML file per event, named by timestamp. Events are never modified;
+ * One YAML file per event, named by timestamp and UUID. Events are never modified;
  * writes use the exclusive flag so an existing file can never be clobbered.
  */
 export class EventStore {
@@ -19,8 +20,7 @@ export class EventStore {
   async append(project: string, event: UpdateEvent): Promise<string> {
     const dir = this.projectDir(project);
     await fs.mkdir(dir, { recursive: true });
-    // 2026-07-14T14-32-11-123Z.yaml — ms suffix avoids same-second collisions.
-    const name = `${event.timestamp.replace(/:/g, "-").replace(/\./g, "-")}.yaml`;
+    const name = `${event.timestamp.replace(/:/g, "-").replace(/\./g, "-")}-${randomUUID()}.yaml`;
     await fs.writeFile(path.join(dir, name), YAML.stringify(event), { flag: "wx" });
     return name;
   }

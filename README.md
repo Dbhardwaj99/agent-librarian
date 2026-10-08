@@ -1,4 +1,4 @@
-# agent-librarian
+# Librarian
 
 Persistent, **curated** project memory for coding agents (Claude Code, Codex, Cursor, or anything with a shell).
 
@@ -12,13 +12,15 @@ agents ──remember────▶ vault/Knowledge/Stash/<Project>/*.yaml   (a
 Librarian (scheduled) ── audits source ──▶ edits Knowledge, removes consumed events, commits, pushes
 ```
 
+Read the [four-page project report](reports/librarian-report.pdf) for three months of usage data, the savings model, and a comparison with Agent Memory Repo.
+
 ## Install
 
 You need Node ≥ 20.12 and git. If you want agents wired up automatically, also install Claude Code, Codex, or Cursor.
 
 ```bash
-git clone https://github.com/Dbhardwaj99/agent-librarian
-cd agent-librarian && npm install && npm link    # builds and puts `agent-librarian` on PATH
+git clone https://github.com/Dbhardwaj99/librarian
+cd librarian && npm install && npm link    # builds and puts `librarian` on PATH
 ```
 
 (`npm i -g github:…` doesn't work: npm skips the TypeScript build for global git installs. Clone instead until the package is on npm.)
@@ -26,14 +28,14 @@ cd agent-librarian && npm install && npm link    # builds and puts `agent-librar
 ## Set up (once)
 
 ```bash
-agent-librarian init ~/agent-memory      # create a private vault, wire every agent CLI found, schedule the Librarian
-cd ~/code/my-app && agent-librarian add  # register each repo you want remembered
+librarian init ~/agent-memory      # create a private vault, wire every agent CLI found, schedule the Librarian
+cd ~/code/my-app && librarian add  # register each repo you want remembered
 ```
 
 `init` does three things:
 
 - Creates `~/agent-memory`, a git repo.
-- Registers the MCP server and installs `skills/agent-librarian/SKILL.md` for each agent it finds: Claude Code, Codex, and Cursor (MCP only).
+- Registers the MCP server and installs `skills/librarian/SKILL.md` for each agent it finds: Claude Code, Codex, and Cursor (MCP only).
 - Schedules the Librarian for weekdays at 11:30, using launchd on macOS or cron on Linux.
 
 To back up your vault and sync it across machines, give it a **private** remote:
@@ -42,13 +44,13 @@ To back up your vault and sync it across machines, give it a **private** remote:
 cd ~/agent-memory && git remote add origin git@github.com:you/agent-memory.git && git push -u origin main
 ```
 
-**New machine or teammate:** clone and link the engine, then run `agent-librarian init git@github.com:you/agent-memory.git`.
+**New machine or teammate:** clone and link the engine, then run `librarian init git@github.com:you/agent-memory.git`.
 
-**Skill only**, for agents the installer doesn't know: `npx skills add Dbhardwaj99/agent-librarian --skill agent-librarian`.
+**Skill only**, for agents the installer doesn't know: `npx skills add Dbhardwaj99/librarian --skill librarian`.
 
 ## Daily use
 
-Nothing changes in how you work. The skill teaches agents to `search_memory` before grepping and to `remember` durable findings. The Librarian runs on schedule and writes `Knowledge/librarian/daily-brief.md`. Run `agent-librarian doctor` whenever something looks off; it also flags a stash backlog that hasn't been processed for over a week.
+Nothing changes in how you work. The skill teaches agents to `search_memory` before grepping and to `remember` durable findings. The Librarian runs on schedule and writes `Knowledge/librarian/daily-brief.md`. Run `librarian doctor` whenever something looks off; it also flags a stash backlog that hasn't been processed for over a week.
 
 ## Commands
 
@@ -63,7 +65,7 @@ Nothing changes in how you work. The skill teaches agents to `search_memory` bef
 | `sync` | Commit new stash events, `pull --rebase`, push — how teammates' events reach the Librarian |
 | `check` | Knowledge structure rules: ≤300 words per note, ≤8 hub children, no unresolved `[[links]]` |
 | `doctor` | Vault, agents, skill freshness, schedule, stash backlog age |
-| `gain` / `dashboard` | Tool-call telemetry from `<vault>/.logs/tool-calls.jsonl` |
+| `gain` | Tool-call telemetry from `<vault>/.logs/tool-calls.jsonl` |
 
 ## MCP tools
 
@@ -81,7 +83,7 @@ Every tool takes `repositoryPath` (the repo being worked on) and an optional `ta
 
 ```text
 agent-memory/
-  agent-librarian.json        # projects → repo folder matchers + paths; librarian agent/schedule/model
+  librarian.json        # projects → repo folder matchers + paths; librarian agent/schedule/model
   Knowledge/
     README.md
     <Project>/<Project>.md    # one hub per repo, Librarian-maintained
@@ -93,11 +95,15 @@ agent-memory/
 
 ## Why not agents writing memory directly?
 
-That is what [Agent Memory Repo](https://github.com/AgentMemoryRepo/agentmemoryrepo) does: simple, zero-dependency, and great for personal preferences. agent-librarian trades a little setup for three things:
+Both Librarian and [Agent Memory Repo](https://github.com/AgentMemoryRepo/agentmemoryrepo) keep linked knowledge in a Git repository. Agent Memory Repo defines direct note updates and periodic Dreaming. Librarian packages a coding workflow with three features:
 
 - **Audited knowledge.** Every claim is checked against source before it becomes canonical.
-- **Conflict-free concurrent writers.** Each event is its own file, so parallel agents and teammates never merge-conflict.
+- **Separate proposals.** Each event is its own file, so agents can record findings independently before the Librarian merges them.
 - **A wiki that stays navigable.** Hubs, size limits, and link checks keep it organized.
+
+## Renaming an existing installation
+
+The project and command are now `librarian`. Before moving an existing checkout, run the old command with `schedule --remove`. Rename the vault settings file to `librarian.json` and the user config directory to `~/.config/librarian`. Update registered paths if the checkout moved. Remove the old MCP registration and skill, then run `npm link`, `librarian install`, and `librarian schedule` from the renamed checkout. Restart agent sessions to load the new MCP name. The knowledge vault itself does not need to move.
 
 ## Development
 

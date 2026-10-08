@@ -1,11 +1,11 @@
 ---
-name: agent-librarian
-description: Use agent-librarian (MCP server or `agent-librarian` CLI) for persistent project knowledge. Memory is the primary source of architectural context and durable project knowledge. Search memory before broad repository exploration to avoid rediscovering existing knowledge. Record durable insights as they are learned.
+name: librarian
+description: Use librarian (MCP server or `librarian` CLI) for persistent project knowledge. Memory is the primary source of architectural context and durable project knowledge. Search memory before broad repository exploration to avoid rediscovering existing knowledge. Record durable insights as they are learned.
 ---
 
-# Agent Librarian
+# Librarian
 
-Persistent project knowledge lives in the `agent-librarian` MCP server.
+Persistent project knowledge lives in the `librarian` MCP server.
 
 It is the ONLY persistent knowledge system for repositories.
 
@@ -17,17 +17,17 @@ Every tool requires:
 
 ## No MCP? Use the shell
 
-If the `agent-librarian` MCP tools are not available, run the same operations from the repository directory:
+If the `librarian` MCP tools are not available, run the same operations from the repository directory:
 
 ```
-agent-librarian search "<query>"
-agent-librarian read <note>
-agent-librarian list
-agent-librarian pending
-agent-librarian remember --type gotcha --summary "..." [--details "..."] [--files a.swift,b.swift] [--tags x,y] [--agent "<your name>"]
+librarian search "<query>"
+librarian read <note>
+librarian list
+librarian pending
+librarian remember --type gotcha --summary "..." [--details "..."] [--files a.swift,b.swift] [--tags x,y] [--agent "<your name>"]
 ```
 
-If the command is missing, tell the user to install agent-librarian. If a repository is unknown, suggest `agent-librarian add` instead of writing notes elsewhere.
+If the command is missing, tell the user to install librarian. If a repository is unknown, suggest `librarian add` instead of writing notes elsewhere.
 
 ---
 
@@ -268,7 +268,7 @@ Routine failures with no reusable lesson should not be recorded.
 
 Canonical knowledge is read-only.
 
-Never edit files in the knowledge vault (`Knowledge/` of the agent-librarian vault).
+Never edit files in the knowledge vault (`Knowledge/` of the librarian vault).
 
 Only use `remember()`.
 

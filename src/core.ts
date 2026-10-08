@@ -20,7 +20,7 @@ export interface CoreDeps {
 /** Composition root shared by the MCP server and the CLI. */
 export function createDeps(config: Config) {
   return {
-    // Re-read the vault config per call so `agent-librarian add` applies without a restart.
+    // Re-read the vault config per call so `librarian add` applies without a restart.
     resolver: new ProjectResolver(() => readVaultConfig(config.vault).projects),
     registry: new ProviderRegistry().register(
       new MarkdownKnowledgeProvider(config.knowledgeRoot, new LineSearchEngine()),

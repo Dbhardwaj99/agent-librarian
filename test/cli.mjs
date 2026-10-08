@@ -5,6 +5,10 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+const pkg = JSON.parse(await fs.readFile(new URL("../package.json", import.meta.url), "utf8"));
+assert.equal(pkg.name, "librarian");
+assert.deepEqual(pkg.bin, { librarian: "dist/cli.js" });
+
 const cli = new URL("../dist/cli.js", import.meta.url).pathname;
 const tmp = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "al-cli-")));
 const home = path.join(tmp, "home");
@@ -27,7 +31,7 @@ const al = (args, { cwd = tmp, extraEnv = {} } = {}) => {
 };
 const ok = (args, opts) => {
   const r = al(args, opts);
-  assert.equal(r.code, 0, `agent-librarian ${args.join(" ")} failed:\n${r.out}`);
+  assert.equal(r.code, 0, `librarian ${args.join(" ")} failed:\n${r.out}`);
   return r.out;
 };
 const sh = (cmd, args, cwd) => {
@@ -37,22 +41,22 @@ const sh = (cmd, args, cwd) => {
 };
 
 // Before init: an actionable error, not a stack trace.
-assert.match(al(["search", "anything"]).out, /No vault configured.*agent-librarian init/);
+assert.match(al(["search", "anything"]).out, /No vault configured.*librarian init/);
 
 // init creates a committed vault and records it for the server/CLI.
 const vault = path.join(tmp, "vault");
 ok(["init", vault, "--no-install", "--no-schedule"]);
-assert.equal(JSON.parse(await fs.readFile(path.join(home, ".config/agent-librarian/config.json"), "utf8")).vault, vault);
+assert.equal(JSON.parse(await fs.readFile(path.join(home, ".config/librarian/config.json"), "utf8")).vault, vault);
 await fs.access(path.join(vault, ".gitignore"));
 await fs.access(path.join(vault, "Knowledge/Stash/.gitkeep"));
-assert.match(sh("git", ["log", "--oneline"], vault), /Create agent-librarian vault/);
+assert.match(sh("git", ["log", "--oneline"], vault), /Create librarian vault/);
 
 // add (from inside the repo, no args) registers it, stubs a hub, and commits.
 const repo = path.join(tmp, "code", "my-app");
 await fs.mkdir(path.join(repo, "src"), { recursive: true });
 sh("git", ["init", "-q"], repo);
 ok(["add"], { cwd: repo });
-const config = JSON.parse(await fs.readFile(path.join(vault, "agent-librarian.json"), "utf8"));
+const config = JSON.parse(await fs.readFile(path.join(vault, "librarian.json"), "utf8"));
 assert.deepEqual(config.projects["my-app"], { match: ["my-app"], paths: [repo] });
 await fs.access(path.join(vault, "Knowledge/my-app/my-app.md"));
 assert.match(sh("git", ["log", "--oneline", "-1"], vault), /Register my-app/);
@@ -76,15 +80,16 @@ assert.match(await fs.readFile(path.join(vault, ".logs/tool-calls.jsonl"), "utf8
 
 // Dry runs describe agent wiring and scheduling without touching anything.
 const install = ok(["install", "--claude", "--codex", "--dry-run"]);
-assert.match(install, /would run: claude mcp add -s user agent-librarian/);
-assert.match(install, /would write \[mcp_servers\.agent-librarian\]/);
+assert.match(install, /would run: claude mcp add -s user librarian/);
+assert.match(install, /would write \[mcp_servers\.librarian\]/);
 await assert.rejects(fs.access(path.join(home, ".codex")), "dry run must not write agent config");
 const schedule = ok(["schedule", "--dry-run"]);
-assert.match(schedule, process.platform === "darwin" ? /<string>com\.agent-librarian\.librarian<\/string>/ : /# agent-librarian-librarian/);
+assert.match(schedule, process.platform === "darwin" ? /<string>com\.librarian\.librarian<\/string>/ : /# librarian-librarian/);
 const librarian = ok(["librarian", "--dry-run"]);
 assert.match(librarian, /2 pending events/);
 assert.match(librarian, new RegExp(`my-app: ${repo}`));
 assert.match(librarian, /codex "exec" "-C"/);
+assert.ok(librarian.includes(`set repositoryPath (or CLI --repo) to the relevant registered source repository above, never ${vault}`));
 assert.match(ok(["doctor"]).replace(/^✗.*$/gm, ""), /stash: 2 pending/);
 
 // Team sync: two clones of one vault exchange events with no conflicts.

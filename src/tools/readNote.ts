@@ -7,6 +7,7 @@ export const registerReadNote: RegisterTool = (server, deps) => {
     "read_note",
     {
       title: "Read note",
+      annotations: { readOnlyHint: true, openWorldHint: false },
       description:
         "Read one Markdown knowledge document for the project. Use a note path returned by list_notes.",
       inputSchema: {

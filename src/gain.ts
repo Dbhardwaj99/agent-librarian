@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Read-only audit of the live and rotated tool-call logs. Run with `agent-librarian gain`.
+// Read-only audit of the live and rotated tool-call logs. Run with `librarian gain`.
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { loadConfig } from "./config.js";
@@ -97,7 +97,7 @@ const dups = tally(remembers.map((e) => `${e.params.repositoryPath}${separator}$
   .filter(([, n]) => n > 1)
   .map(([k, n]): [string, number] => [k.split(separator)[1], n]);
 
-console.log(`# memory-mcp gain — ${files.length} log file(s) at ${file}`);
+console.log(`# librarian gain — ${files.length} log file(s) at ${file}`);
 console.log(`${entries.length} calls  ${entries[0].timestamp} → ${entries.at(-1)!.timestamp}\n`);
 console.log(
   `Coverage: outcome ${outcomeEntries.length}/${entries.length}, search results ${measuredSearches.length}/${searches.length}, remember summaries ${remembers.length}/${entries.filter((e) => e.tool === "remember").length}, malformed ${malformed}\n`,

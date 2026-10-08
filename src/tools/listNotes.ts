@@ -7,6 +7,7 @@ export const registerListNotes: RegisterTool = (server, deps) => {
     "list_notes",
     {
       title: "List notes",
+      annotations: { readOnlyHint: true, openWorldHint: false },
       description:
         "List every Markdown knowledge document available for the project at the given repository root path.",
       inputSchema: {

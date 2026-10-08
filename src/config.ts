@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The vault's own settings file, committed with the knowledge. */
-export const VAULT_CONFIG = "agent-librarian.json";
+export const VAULT_CONFIG = "librarian.json";
 
 export interface ProjectConfig {
   /** Folder names that identify the project's repos. A trailing `*` matches a prefix. */
@@ -24,7 +24,7 @@ export interface VaultConfig {
 
 /**
  * Filesystem layout. Everything hangs off the vault: a git repo holding
- * Knowledge/ (canonical notes + Stash/) and agent-librarian.json.
+ * Knowledge/ (canonical notes + Stash/) and librarian.json.
  */
 export interface Config {
   vault: string;
@@ -38,8 +38,8 @@ export interface Config {
   logMaxBytes: number;
 }
 
-/** Per-user pointer to the vault: ~/.config/agent-librarian/config.json. */
-export const userConfigFile = () => path.join(os.homedir(), ".config", "agent-librarian", "config.json");
+/** Per-user pointer to the vault: ~/.config/librarian/config.json. */
+export const userConfigFile = () => path.join(os.homedir(), ".config", "librarian", "config.json");
 
 export function findVault(env: NodeJS.ProcessEnv = process.env): string {
   if (env.MEMORY_ROOT) return path.resolve(env.MEMORY_ROOT);
@@ -49,7 +49,7 @@ export function findVault(env: NodeJS.ProcessEnv = process.env): string {
   } catch {
     // fall through to the actionable error below
   }
-  throw new Error("No vault configured. Run `agent-librarian init` (or set MEMORY_ROOT).");
+  throw new Error("No vault configured. Run `librarian init` (or set MEMORY_ROOT).");
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -67,7 +67,7 @@ const DEFAULT_VAULT_CONFIG: VaultConfig = {
   librarian: { agent: "codex", schedule: "weekdays 11:30" },
 };
 
-/** Read <vault>/agent-librarian.json. Re-read on every call so `add` takes effect without a restart. */
+/** Read <vault>/librarian.json. Re-read on every call so `add` takes effect without a restart. */
 export function readVaultConfig(vault: string): VaultConfig {
   let raw: Partial<VaultConfig> = {};
   try {

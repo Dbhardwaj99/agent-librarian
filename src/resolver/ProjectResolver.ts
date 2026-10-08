@@ -28,7 +28,7 @@ export class ProjectResolver {
     }
     const known = projects.flatMap(([, p]) => p.match).join(", ") || "none";
     throw new Error(
-      `Unknown repository "${path.basename(repositoryPath)}". Register it with \`agent-librarian add <repo>\`. Known repositories: ${known}`,
+      `Unknown repository "${path.basename(repositoryPath)}". Register it with \`librarian add <repo>\`. Known repositories: ${known}`,
     );
   }
 }

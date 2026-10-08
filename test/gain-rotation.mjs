@@ -15,6 +15,10 @@ for (let i = 0; i < 20; i++) await logger.log("search_memory", { query: `q${i}`,
 const listing = await fs.readdir(dir);
 assert.ok(listing.some((f) => f.startsWith("tool-calls.jsonl.")), "expected a rotated archive");
 assert.ok((await fs.stat(file)).size < 200 * 2, "live file should be small after rotation");
+const rotated = (await Promise.all(listing.map((name) => fs.readFile(path.join(dir, name), "utf8"))))
+  .join("").split("\n").filter(Boolean).map(JSON.parse);
+assert.deepEqual(rotated.map((entry) => entry.params.query).sort(),
+  Array.from({ length: 20 }, (_,i) => `q${i}`).sort(), "rotation must retain every call exactly once");
 
 // gain: seed a zero-result search and an exact-duplicate remember, expect both flagged.
 const repo = "/tmp/repo";

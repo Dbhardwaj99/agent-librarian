@@ -7,7 +7,7 @@ import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
-const root = await fs.mkdtemp(path.join(os.tmpdir(), "memory-mcp-"));
+const root = await fs.mkdtemp(path.join(os.tmpdir(), "librarian-"));
 await fs.mkdir(path.join(root, "Knowledge/Kuku/payments"), { recursive: true });
 await fs.mkdir(path.join(root, "Knowledge/Kuku/manifest"), { recursive: true });
 await fs.mkdir(path.join(root, "Knowledge/MCP"), { recursive: true });
@@ -27,7 +27,7 @@ await fs.writeFile(path.join(root, "Knowledge/MCP/observability.md"), "# Observa
 await fs.writeFile(path.join(root, "Knowledge/Duskara/overview.md"), "# Duskara\n");
 await fs.writeFile(path.join(root, "Knowledge/OpenFront/overview.md"), "# OpenFront\n");
 await fs.writeFile(
-  path.join(root, "agent-librarian.json"),
+  path.join(root, "librarian.json"),
   JSON.stringify({
     projects: {
       Kuku: { match: ["kukufm-ios", "kukufm-ios-*"] },
@@ -47,6 +47,8 @@ await client.connect(
   }),
 );
 
+assert.equal(client.getServerVersion().name, "librarian");
+
 const call = async (name, args) => {
   const res = await client.callTool({ name, arguments: args });
   assert.equal(res.isError ?? false, false, `${name} errored: ${res.content?.[0]?.text}`);
@@ -54,6 +56,13 @@ const call = async (name, args) => {
 };
 const repositoryPath = "/Users/divyansh/Documents/kukufm-ios";
 const taskId = "smoke-run";
+const advertised = await client.listTools();
+assert.equal(advertised.tools.length, 5);
+for (const tool of advertised.tools) {
+  assert.equal(tool.annotations.readOnlyHint, tool.name !== "remember");
+  assert.equal(tool.annotations.openWorldHint, false);
+}
+assert.equal(advertised.tools.find((tool) => tool.name === "remember").annotations.destructiveHint, false);
 
 // list_notes
 const notes = JSON.parse(await call("list_notes", { repositoryPath, taskId }));

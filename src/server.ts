@@ -15,7 +15,7 @@ import { registerPendingUpdates } from "./tools/pendingUpdates.js";
 const deps = createDeps(loadConfig());
 
 const { version } = JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"));
-const server = new McpServer({ name: "agent-librarian", version });
+const server = new McpServer({ name: "librarian", version });
 for (const register of [
   registerListNotes,
   registerReadNote,
